@@ -51,6 +51,7 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 
 		<div class="nsc-form-group">
 			<label class="nsc-form-label"><%:受控设备%></label>
+			<input type="text" id="modal_device_search" class="nsc-form-control" style="margin-bottom: 6px;" placeholder="🔍 输入设备名称、IP 或 MAC 模糊搜索..." oninput="filterModalDeviceOptions(this.value)">
 			<select id="modal_rule_mac" class="nsc-form-control" onchange="toggleModalCustomMac(this)">
 				<option value="">-- <%:请选择在线设备%> --</option>
 				<% for _, dev in ipairs(online_devices) do %>
@@ -164,7 +165,44 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 		if (overlay) overlay.style.display = "flex";
 	}
 
+	function filterModalDeviceOptions(query) {
+		var select = document.getElementById("modal_rule_mac");
+		if (!select) return;
+		var options = select.options;
+		var q = (query || "").trim().toLowerCase();
+		var visibleCount = 0;
+		var lastMatchIndex = -1;
+
+		for (var i = 0; i < options.length; i++) {
+			var opt = options[i];
+			if (opt.value === "" || opt.value === "CUSTOM") {
+				opt.style.display = "";
+				continue;
+			}
+			var text = (opt.text || "").toLowerCase();
+			var val = (opt.value || "").toLowerCase();
+
+			if (q === "" || text.indexOf(q) !== -1 || val.indexOf(q) !== -1) {
+				opt.style.display = "";
+				visibleCount++;
+				lastMatchIndex = i;
+			} else {
+				opt.style.display = "none";
+			}
+		}
+
+		if (visibleCount === 1 && lastMatchIndex !== -1) {
+			select.selectedIndex = lastMatchIndex;
+			toggleModalCustomMac(select);
+		}
+	}
+
 	function openAddRuleModal() {
+		var searchInput = document.getElementById("modal_device_search");
+		if (searchInput) {
+			searchInput.value = "";
+			filterModalDeviceOptions("");
+		}
 		document.getElementById("modal_sid").value = "";
 		document.getElementById("nscModalTitleText").innerText = "<%:新增设备控制规则%>";
 		
@@ -191,6 +229,12 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 	function openEditRuleModal(btn) {
 		if (!btn || !btn.dataset) return;
 		var ds = btn.dataset;
+
+		var searchInput = document.getElementById("modal_device_search");
+		if (searchInput) {
+			searchInput.value = "";
+			filterModalDeviceOptions("");
+		}
 
 		document.getElementById("modal_sid").value = ds.sid || "";
 		document.getElementById("nscModalTitleText").innerText = "<%:修改设备控制规则%>";
