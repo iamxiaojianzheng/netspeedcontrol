@@ -44,7 +44,7 @@ fi
 
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "未能从 GitHub Releases 找不到 IPK 下载地址，尝试使用直链..."
-    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/latest/download/luci-app-netspeedcontrol_0.1.0-32_all.ipk"
+    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/latest/download/luci-app-netspeedcontrol_0.2.0-1_all.ipk"
 fi
 
 IPK_FILE="${TMP_DIR}/luci-app-netspeedcontrol.ipk"
