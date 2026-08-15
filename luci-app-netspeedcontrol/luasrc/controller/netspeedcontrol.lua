@@ -51,21 +51,42 @@ function action_add_rule()
 		return
 	end
 
-	local section_id = uci:section("netspeedcontrol", "rule", nil, {
-		enabled = "1",
-		name = name,
-		mac = mac,
-		target_type = "mac",
-		mode = mode,
-		target_scope = target_scope,
-		app_category = app_category,
-		custom_domains = custom_domains,
-		weekdays = weekdays,
-		start_time = start_time,
-		stop_time = stop_time,
-		up_kbit = up_kbit,
-		down_kbit = down_kbit
-	})
+	local sid = http.formvalue("sid") or http.formvalue("section_id") or ""
+	local section_id = nil
+
+	if sid ~= "" and uci:get("netspeedcontrol", sid) then
+		section_id = sid
+		uci:tset("netspeedcontrol", section_id, {
+			name = name,
+			mac = mac,
+			target_type = "mac",
+			mode = mode,
+			target_scope = target_scope,
+			app_category = app_category,
+			custom_domains = custom_domains,
+			weekdays = weekdays,
+			start_time = start_time,
+			stop_time = stop_time,
+			up_kbit = up_kbit,
+			down_kbit = down_kbit
+		})
+	else
+		section_id = uci:section("netspeedcontrol", "rule", nil, {
+			enabled = "1",
+			name = name,
+			mac = mac,
+			target_type = "mac",
+			mode = mode,
+			target_scope = target_scope,
+			app_category = app_category,
+			custom_domains = custom_domains,
+			weekdays = weekdays,
+			start_time = start_time,
+			stop_time = stop_time,
+			up_kbit = up_kbit,
+			down_kbit = down_kbit
+		})
+	end
 
 	if section_id then
 		local auto_commit = http.formvalue("commit")

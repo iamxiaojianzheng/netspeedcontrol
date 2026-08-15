@@ -33,215 +33,111 @@ s.addremove = true
 s.anonymous = true
 s.template = "cbi/tblsection"
 
-o = s:option(Flag, "enabled", translate("启用"))
-o.rmempty = true
-
-o = s:option(Value, "name", translate("规则名称"))
-o.placeholder = "KidPhone"
-o.rmempty = true
-
-o = s:option(ListValue, "mac", translate("受控设备"))
-o:value("", translate("请选择设备"))
-o:value("CUSTOM", translate("[+] 手动填写 MAC..."))
-o.rmempty = true
-
-for _, device in ipairs(online_devices) do
-	o:value(device.mac, nsc.device_label(device))
-end
-
+-- 1. 编辑操作列 (放在行开头)
+o = s:option(DummyValue, "_edit_btn", translate("编辑"))
+o.rawhtml = true
 function o.cfgvalue(self, section)
-	local current_mac = nsc.normalize_mac(uci:get("netspeedcontrol", section, "mac") or "")
-	if current_mac ~= "" then
-		if not nsc.has_online_device(online_devices, current_mac) then
-			nsc.ensure_option_value(self, current_mac, nsc.saved_device_label(current_mac))
-		end
-		return current_mac
-	end
-	return ""
+	local name = uci:get("netspeedcontrol", section, "name") or ""
+	local mac = uci:get("netspeedcontrol", section, "mac") or ""
+	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
+	local scope = uci:get("netspeedcontrol", section, "target_scope") or "all"
+	local app = uci:get("netspeedcontrol", section, "app_category") or "short_video"
+	local doms = uci:get("netspeedcontrol", section, "custom_domains") or ""
+	local w = uci:get("netspeedcontrol", section, "weekdays") or "1 2 3 4 5 6 7"
+	local start_t = uci:get("netspeedcontrol", section, "start_time") or "21:00"
+	local stop_t = uci:get("netspeedcontrol", section, "stop_time") or "07:00"
+	local up = nsc.format_rate_display(uci:get("netspeedcontrol", section, "up_kbit"))
+	local down = nsc.format_rate_display(uci:get("netspeedcontrol", section, "down_kbit"))
+
+	return string.format([[
+		<button type="button" class="cbi-button cbi-button-edit" style="padding: 2px 8px;"
+			data-sid="%s" data-name="%s" data-mac="%s" data-mode="%s"
+			data-scope="%s" data-app="%s" data-domains="%s" data-weekdays="%s"
+			data-start="%s" data-stop="%s" data-up="%s" data-down="%s"
+			onclick="openEditRuleModal(this)">
+			%s
+		</button>
+	]], section, pcdata(name), pcdata(mac), pcdata(mode),
+	    pcdata(scope), pcdata(app), pcdata(doms), pcdata(w),
+	    pcdata(start_t), pcdata(stop_t), pcdata(up), pcdata(down),
+	    translate("修改"))
 end
 
-function o.write(self, section, value)
-	local custom_mac = nsc.normalize_mac(self.map:formvalue("cbid.netspeedcontrol." .. section .. "._custom_mac") or "")
-	local selected_mac = nsc.normalize_mac(value or "")
-	local final_mac = (selected_mac == "CUSTOM" or selected_mac == "") and custom_mac or selected_mac
+-- 2. 状态开关
+o = s:option(Flag, "enabled", translate("状态"))
+o.rmempty = true
 
-	if final_mac ~= "" then
-		uci:set("netspeedcontrol", section, "mac", final_mac)
-		uci:set("netspeedcontrol", section, "target_type", "mac")
-		uci:delete("netspeedcontrol", section, "ip")
+-- 3. 规则名称
+o = s:option(DummyValue, "name", translate("规则名称"))
+function o.cfgvalue(self, section)
+	return uci:get("netspeedcontrol", section, "name") or "未命名"
+end
+
+-- 受控设备
+o = s:option(DummyValue, "mac", translate("受控设备"))
+function o.cfgvalue(self, section)
+	local mac = nsc.normalize_mac(uci:get("netspeedcontrol", section, "mac") or "")
+	if mac == "" then return "未知设备" end
+	for _, dev in ipairs(online_devices) do
+		if dev.mac == mac then
+			return nsc.device_label(dev)
+		end
+	end
+	return nsc.saved_device_label(mac)
+end
+
+-- 控制方式
+o = s:option(DummyValue, "mode", translate("控制方式"))
+o.rawhtml = true
+function o.cfgvalue(self, section)
+	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
+	if mode == "block" then
+		return '<span style="color:#e53e3e; font-weight:bold;">[ 定时断网 ]</span>'
 	else
-		uci:delete("netspeedcontrol", section, "mac")
-		uci:delete("netspeedcontrol", section, "target_type")
-		uci:delete("netspeedcontrol", section, "ip")
+		return '<span style="color:#3182ce; font-weight:bold;">[ 定时限速 ]</span>'
 	end
 end
 
-o = s:option(Value, "_custom_mac", translate("手动 MAC"))
-o.datatype = "macaddr"
-o.placeholder = "AA:BB:CC:DD:EE:FF"
-o.size = 18
-o:depends("mac", "CUSTOM")
-
-function o.cfgvalue(self, section)
-	local current_mac = nsc.normalize_mac(uci:get("netspeedcontrol", section, "mac") or "")
-	if current_mac ~= "" and not nsc.has_online_device(online_devices, current_mac) then
-		return current_mac
-	end
-	return ""
-end
-
-o = s:option(ListValue, "mode", translate("控制方式"))
-o:value("block", translate("定时断网"))
-o:value("limit", translate("定时限速"))
-o.default = "block"
-o.rmempty = true
-
-o = s:option(ListValue, "target_scope", translate("控制范围"))
-o:value("all", translate("全网流量"))
-o:value("app", translate("指定应用"))
-o:value("custom_domain", translate("自定义域名"))
-o.default = "all"
-o.rmempty = true
-
-o = s:option(ListValue, "app_category", translate("应用分类"))
-o:value("", translate("-- 不适用 --"))
-o:value("short_video", translate("短视频/直播"))
-o:value("gaming", translate("网络游戏"))
-o:value("video", translate("影视视频"))
-o:value("social", translate("社交聊天"))
-o.default = ""
-o:depends("target_scope", "app")
-
+-- 控制范围
+o = s:option(DummyValue, "target_scope", translate("控制范围"))
 function o.cfgvalue(self, section)
 	local scope = uci:get("netspeedcontrol", section, "target_scope") or "all"
-	if scope ~= "app" then
-		return ""
+	if scope == "all" then
+		return "全网流量"
+	elseif scope == "app" then
+		local app = uci:get("netspeedcontrol", section, "app_category") or "short_video"
+		local app_names = { short_video="短视频/直播", gaming="网络游戏", video="影视视频", social="社交聊天" }
+		return "指定应用 (" .. (app_names[app] or app) .. ")"
+	elseif scope == "custom_domain" then
+		local doms = uci:get("netspeedcontrol", section, "custom_domains") or ""
+		return "自定义域名 (" .. (doms ~= "" and doms or "未设置") .. ")"
 	end
-	local v = uci:get("netspeedcontrol", section, "app_category")
-	return (v and v ~= "") and v or "short_video"
+	return "全网流量"
 end
 
-o = s:option(Value, "custom_domains", translate("自定义域名"))
-o.placeholder = "例如: baidu.com tieba.baidu.com"
-o.size = 20
-o:depends("target_scope", "custom_domain")
-
+-- 生效时间
+o = s:option(DummyValue, "time_range", translate("生效时间"))
 function o.cfgvalue(self, section)
-	local scope = uci:get("netspeedcontrol", section, "target_scope") or "all"
-	if scope ~= "custom_domain" then
-		return ""
+	local start_t = uci:get("netspeedcontrol", section, "start_time") or "21:00"
+	local stop_t = uci:get("netspeedcontrol", section, "stop_time") or "07:00"
+	local w = uci:get("netspeedcontrol", section, "weekdays") or "1 2 3 4 5 6 7"
+	local day_map = { ["1"]="一", ["2"]="二", ["3"]="三", ["4"]="四", ["5"]="五", ["6"]="六", ["7"]="日" }
+	local days = {}
+	for d in w:gmatch("%d") do
+		table.insert(days, day_map[d] or d)
 	end
-	return uci:get("netspeedcontrol", section, "custom_domains") or ""
+	local day_str = (#days > 0) and ("周" .. table.concat(days, "/")) or "每日"
+	return string.format("%s (%s-%s)", day_str, start_t, stop_t)
 end
 
-o = s:option(Value, "weekdays", translate("生效星期"))
-o.placeholder = "1 2 3 4 5 6 7"
-o.default = "1 2 3 4 5 6 7"
-
-o = s:option(Value, "start_time", translate("开始时间"))
-o.placeholder = "21:00"
-o.default = "21:00"
-o.rmempty = true
-
-function o.cfgvalue(self, section)
-	local v = uci:get("netspeedcontrol", section, "start_time")
-	return (v and v ~= "") and v or "21:00"
-end
-
-local function validate_time_format(val, default_val)
-	if not val or val == "" then
-		return default_val
-	end
-	local v = tostring(val):gsub("^%s*(.-)%s*$", "%1")
-	if v == "" then
-		return default_val
-	end
-	local h, m = v:match("^(%d%d?):(%d%d)$")
-	if h and m then
-		local hn, mn = tonumber(h), tonumber(m)
-		if hn and mn and hn >= 0 and hn <= 23 and mn >= 0 and mn <= 59 then
-			return string.format("%02d:%02d", hn, mn)
-		end
-	end
-	return nil
-end
-
-function o.validate(self, value, section)
-	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
-		return value
-	end
-	local res = validate_time_format(value, "21:00")
-	if not res then
-		return nil, translate("开始时间格式错误，请输入标准的 24 小时制时间，例如 21:00！")
-	end
-	return res
-end
-
-o = s:option(Value, "stop_time", translate("结束时间"))
-o.placeholder = "07:00"
-o.default = "07:00"
-o.rmempty = true
-
-function o.cfgvalue(self, section)
-	local v = uci:get("netspeedcontrol", section, "stop_time")
-	return (v and v ~= "") and v or "07:00"
-end
-
-function o.validate(self, value, section)
-	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
-		return value
-	end
-	local res = validate_time_format(value, "07:00")
-	if not res then
-		return nil, translate("结束时间格式错误，请输入标准的 24 小时制时间，例如 07:00！")
-	end
-	return res
-end
-
-o = s:option(Value, "up_kbit", translate("上传限速"))
-o.placeholder = "256k"
-o:depends("mode", "limit")
-
+-- 限速数据
+o = s:option(DummyValue, "rate_limit", translate("限速数据"))
 function o.cfgvalue(self, section)
 	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
-	if mode ~= "limit" then return "" end
-	local val = uci:get("netspeedcontrol", section, "up_kbit")
-	return nsc.format_rate_display(val)
-end
-
-function o.validate(self, value, section)
-	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
-		return value
-	end
-	if not value or value == "" then return "" end
-	local parsed = nsc.parse_rate_value(value)
-	if not parsed then
-		return nil, translate("上传限速数值无效！支持填写数字（如 256）或带单位字符串（如 512k, 1M）。")
-	end
-	return tostring(parsed)
-end
-
-o = s:option(Value, "down_kbit", translate("下载限速"))
-o.placeholder = "1024k"
-o:depends("mode", "limit")
-
-function o.cfgvalue(self, section)
-	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
-	if mode ~= "limit" then return "" end
-	local val = uci:get("netspeedcontrol", section, "down_kbit")
-	return nsc.format_rate_display(val)
-end
-
-function o.validate(self, value, section)
-	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
-		return value
-	end
-	if not value or value == "" then return "" end
-	local parsed = nsc.parse_rate_value(value)
-	if not parsed then
-		return nil, translate("下载限速数值无效！支持填写数字（如 1024）或带单位字符串（如 1M, 2M）。")
-	end
-	return tostring(parsed)
+	if mode ~= "limit" then return "-" end
+	local up = nsc.format_rate_display(uci:get("netspeedcontrol", section, "up_kbit"))
+	local down = nsc.format_rate_display(uci:get("netspeedcontrol", section, "down_kbit"))
+	return string.format("↑ %s / ↓ %s", up ~= "" and up or "无限制", down ~= "" and down or "无限制")
 end
 
 return m
