@@ -128,21 +128,33 @@ function o.cfgvalue(self, section)
 	return (v and v ~= "") and v or "21:00"
 end
 
+local function validate_time_format(val, default_val)
+	if not val or val == "" then
+		return default_val
+	end
+	local v = tostring(val):gsub("^%s*(.-)%s*$", "%1")
+	if v == "" then
+		return default_val
+	end
+	local h, m = v:match("^(%d%d?):(%d%d)$")
+	if h and m then
+		local hn, mn = tonumber(h), tonumber(m)
+		if hn and mn and hn >= 0 and hn <= 23 and mn >= 0 and mn <= 59 then
+			return string.format("%02d:%02d", hn, mn)
+		end
+	end
+	return nil
+end
+
 function o.validate(self, value, section)
 	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
 		return value
 	end
-	if not value or value == "" then
-		return "21:00"
-	end
-	local v = value:gsub("^%s*(.-)%s*$", "%1")
-	if v == "" then
-		return "21:00"
-	end
-	if not v:match("^([01]%d|2[0-3]):[0-5]%d$") then
+	local res = validate_time_format(value, "21:00")
+	if not res then
 		return nil, translate("开始时间格式错误，请输入标准的 24 小时制时间，例如 21:00！")
 	end
-	return v
+	return res
 end
 
 o = s:option(Value, "stop_time", translate("结束时间"))
@@ -159,17 +171,11 @@ function o.validate(self, value, section)
 	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
 		return value
 	end
-	if not value or value == "" then
-		return "07:00"
-	end
-	local v = value:gsub("^%s*(.-)%s*$", "%1")
-	if v == "" then
-		return "07:00"
-	end
-	if not v:match("^([01]%d|2[0-3]):[0-5]%d$") then
+	local res = validate_time_format(value, "07:00")
+	if not res then
 		return nil, translate("结束时间格式错误，请输入标准的 24 小时制时间，例如 07:00！")
 	end
-	return v
+	return res
 end
 
 o = s:option(Value, "up_kbit", translate("上传限速"))
