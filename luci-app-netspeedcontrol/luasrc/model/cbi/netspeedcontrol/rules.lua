@@ -128,10 +128,9 @@ function m.on_after_commit(self)
 	apply_now()
 end
 
-s = m:section(TypedSection, "rule", translate("规则列表"))
+s = m:section(TypedSection, "rule", translate("规则管理"))
 s.addremove = true
 s.anonymous = true
-s.template = "cbi/tblsection"
 
 o = s:option(Flag, "enabled", translate("启用"))
 o.rmempty = false
