@@ -240,6 +240,24 @@ o_modal.cfgvalue = function()
 			</div>
 
 			<div class="nsc-form-group">
+				<label class="nsc-form-label">生效星期 (默认全选)</label>
+				<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:6px; background:#f7fafc; padding:6px 10px; border-radius:4px; border:1px solid #e2e8f0;">
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="1" checked> 周一</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="2" checked> 周二</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="3" checked> 周三</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="4" checked> 周四</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="5" checked> 周五</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="6" checked> 周六</label>
+					<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="7" checked> 周日</label>
+				</div>
+				<div>
+					<button type="button" class="nsc-preset-btn" onclick="selectModalWeekdays('all')">全选 (一至日)</button>
+					<button type="button" class="nsc-preset-btn" onclick="selectModalWeekdays('work')">仅工作日 (一至五)</button>
+					<button type="button" class="nsc-preset-btn" onclick="selectModalWeekdays('weekend')">仅周末 (六日)</button>
+				</div>
+			</div>
+
+			<div class="nsc-form-group">
 				<label class="nsc-form-label">快捷场景预设时间</label>
 				<div>
 					<button type="button" class="nsc-preset-btn" onclick="applyModalTimePreset('night')">夜间防沉迷 (22:00-06:00)</button>
@@ -294,6 +312,20 @@ o_modal.cfgvalue = function()
 			if (domainGroup) domainGroup.style.display = (sel.value === "custom_domain") ? "block" : "none";
 		}
 
+		function selectModalWeekdays(type) {
+			var cbs = document.querySelectorAll(".nsc-modal-weekday");
+			for (var i = 0; i < cbs.length; i++) {
+				var val = parseInt(cbs[i].value, 10);
+				if (type === 'all') {
+					cbs[i].checked = true;
+				} else if (type === 'work') {
+					cbs[i].checked = (val >= 1 && val <= 5);
+				} else if (type === 'weekend') {
+					cbs[i].checked = (val === 6 || val === 7);
+				}
+			}
+		}
+
 		function applyModalTimePreset(type) {
 			var startInput = document.getElementById("modal_rule_start");
 			var stopInput = document.getElementById("modal_rule_stop");
@@ -313,12 +345,20 @@ o_modal.cfgvalue = function()
 				return;
 			}
 
+			var selectedDays = [];
+			var dayCbs = document.querySelectorAll(".nsc-modal-weekday");
+			for (var d = 0; d < dayCbs.length; d++) {
+				if (dayCbs[d].checked) selectedDays.push(dayCbs[d].value);
+			}
+			var finalWeekdays = selectedDays.join(" ");
+
 			sessionStorage.setItem("nsc_modal_mac", finalMac);
 			sessionStorage.setItem("nsc_modal_name", document.getElementById("modal_rule_name").value || "KidPhone");
 			sessionStorage.setItem("nsc_modal_mode", document.getElementById("modal_rule_mode").value || "block");
 			sessionStorage.setItem("nsc_modal_scope", document.getElementById("modal_rule_scope").value || "all");
 			sessionStorage.setItem("nsc_modal_app", document.getElementById("modal_rule_app_cat").value || "short_video");
 			sessionStorage.setItem("nsc_modal_domains", document.getElementById("modal_rule_domains").value || "");
+			sessionStorage.setItem("nsc_modal_weekdays", finalWeekdays || "1 2 3 4 5 6 7");
 			sessionStorage.setItem("nsc_modal_start", document.getElementById("modal_rule_start").value || "21:00");
 			sessionStorage.setItem("nsc_modal_stop", document.getElementById("modal_rule_stop").value || "07:00");
 			sessionStorage.setItem("nsc_modal_up", document.getElementById("modal_rule_up").value || "");
@@ -379,6 +419,12 @@ o_modal.cfgvalue = function()
 				if (domainInputs && domainInputs.length > 0) {
 					domainInputs[domainInputs.length - 1].value = sessionStorage.getItem("nsc_modal_domains") || "";
 					sessionStorage.removeItem("nsc_modal_domains");
+				}
+
+				var weekdayInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.weekdays']");
+				if (weekdayInputs && weekdayInputs.length > 0) {
+					weekdayInputs[weekdayInputs.length - 1].value = sessionStorage.getItem("nsc_modal_weekdays") || "1 2 3 4 5 6 7";
+					sessionStorage.removeItem("nsc_modal_weekdays");
 				}
 
 				var upInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.up_kbit']");
