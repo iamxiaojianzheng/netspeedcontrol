@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-netspeedcontrol
 PKG_VERSION:=0.2.3
-PKG_RELEASE:=14
+PKG_RELEASE:=15
 
 LUCI_TITLE:=LuCI support for scheduled device network control
 LUCI_DEPENDS:=+luci-base +luci-compat +nftables +firewall4

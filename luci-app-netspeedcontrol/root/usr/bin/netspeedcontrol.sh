@@ -88,9 +88,9 @@ ensure_table() {
 	local cat
 	"$NFT_BIN" list table "$TABLE_FAMILY" "$TABLE_NAME" >/dev/null 2>&1 && return 0
 	"$NFT_BIN" add table "$TABLE_FAMILY" "$TABLE_NAME"
-	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" "{ type filter hook prerouting priority raw; policy accept; }"
-	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" "{ type filter hook forward priority filter; policy accept; }"
-	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" "{ type filter hook input priority filter; policy accept; }"
+	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" "{ type filter hook prerouting priority raw - 10; policy accept; }"
+	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" "{ type filter hook forward priority filter - 10; policy accept; }"
+	"$NFT_BIN" add chain "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" "{ type filter hook input priority filter - 10; policy accept; }"
 
 	for cat in short_video gaming video social custom; do
 		"$NFT_BIN" add set "$TABLE_FAMILY" "$TABLE_NAME" "app_${cat}_v4" "{ type ipv4_addr; flags timeout; timeout 2h; }" 2>/dev/null || true
@@ -348,25 +348,39 @@ collect_event_logs() {
 }
 
 append_block_rule() {
-	local ip name lan_ip set_v4
+	local ip name set_v4 mac norm_mac lan_ip
 	ip="$1"
 	name="$2"
 	set_v4="$3"
+	mac="$4"
 	lan_ip="$(get_lan_ip)"
 
 	if [ -n "$lan_ip" ]; then
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" ip daddr "$lan_ip" meta l4proto tcp tcp dport { 80, 443 } counter accept
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip saddr "$ip" ip daddr "$lan_ip" meta l4proto tcp tcp dport { 80, 443 } counter accept
+		[ -n "$ip" ] && "$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" ip daddr "$lan_ip" meta l4proto tcp tcp dport { 80, 443 } counter accept
+		[ -n "$ip" ] && "$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip saddr "$ip" ip daddr "$lan_ip" meta l4proto tcp tcp dport { 80, 443 } counter accept
 	fi
 
-	if [ -n "$set_v4" ]; then
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" ip daddr "@$set_v4" counter drop
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" ip daddr "@$set_v4" counter drop
-	else
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" counter drop
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" counter drop
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip daddr "$ip" counter drop
-		"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip saddr "$ip" meta l4proto { tcp, udp } counter drop
+	if [ -n "$mac" ]; then
+		norm_mac="$(normalize_mac "$mac")"
+		if [ -z "$set_v4" ]; then
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ether saddr "$norm_mac" counter drop 2>/dev/null || true
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ether saddr "$norm_mac" counter drop 2>/dev/null || true
+		else
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ether saddr "$norm_mac" ip daddr "@$set_v4" counter drop 2>/dev/null || true
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ether saddr "$norm_mac" ip daddr "@$set_v4" counter drop 2>/dev/null || true
+		fi
+	fi
+
+	if [ -n "$ip" ]; then
+		if [ -n "$set_v4" ]; then
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" ip daddr "@$set_v4" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" ip daddr "@$set_v4" counter drop
+		else
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip daddr "$ip" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip saddr "$ip" meta l4proto { tcp, udp } counter drop
+		fi
 	fi
 }
 
@@ -520,7 +534,7 @@ handle_rule() {
 
 	case "$mode" in
 		block)
-			[ -n "$resolved_ip" ] && append_block_rule "$resolved_ip" "$name" "$set_v4"
+			append_block_rule "$resolved_ip" "$name" "$set_v4" "$mac"
 			for resolved_ip6 in $ip6_list; do
 				append_block_rule6 "$resolved_ip6" "$name" "$set_v6"
 			done
