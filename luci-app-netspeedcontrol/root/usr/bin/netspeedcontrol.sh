@@ -165,24 +165,23 @@ resolve_ipv6_from_mac() {
 }
 
 rate_to_nft_bytes() {
-	local rate kbytes
-	rate="${1:-0}"
+	local raw_rate rate
+	raw_rate="${1:-0}"
 
-	case "$rate" in
-		''|*[!0-9]*)
-			echo ""
-			return 1
-		;;
-	esac
+	# 提取纯数字（支持带 k/K/m/M 的单位输入）
+	rate="$(echo "$raw_rate" | tr -cd '0-9')"
+	[ -n "$rate" ] || return 1
 
-	[ "$rate" -le 0 ] && {
+	if [ "$rate" -le 0 ]; then
 		echo ""
 		return 1
-	}
+	fi
 
-	kbytes=$(( (rate + 7) / 8 ))
-	[ "$kbytes" -le 0 ] && kbytes=1
-	echo "$kbytes kbytes/second"
+	if echo "$raw_rate" | grep -qi "m"; then
+		echo "${rate} mbytes/second"
+	else
+		echo "${rate} kbytes/second"
+	fi
 }
 
 is_weekday_match() {
@@ -411,28 +410,36 @@ append_block_rule6() {
 }
 
 append_limit_rule() {
-	local ip name up_rate down_rate set_v4
+	local ip name up_rate down_rate set_v4 mac norm_mac
 	ip="$1"
 	name="$2"
 	up_rate="$3"
 	down_rate="$4"
 	set_v4="$5"
+	mac="$6"
 
-	if [ -n "$set_v4" ]; then
+	if [ -n "$mac" ]; then
+		norm_mac="$(normalize_mac "$mac")"
 		if [ -n "$up_rate" ]; then
-			# 上传：设备 -> 应用服务器
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" ip daddr "@$set_v4" limit rate over "$up_rate" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ether saddr "$norm_mac" limit rate over "$up_rate" counter drop 2>/dev/null || true
 		fi
-		if [ -n "$down_rate" ]; then
-			# 下载：应用服务器 -> 设备
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "@$set_v4" ip daddr "$ip" limit rate over "$down_rate" counter drop
-		fi
-	else
-		if [ -n "$up_rate" ]; then
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" limit rate over "$up_rate" counter drop
-		fi
-		if [ -n "$down_rate" ]; then
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip daddr "$ip" limit rate over "$down_rate" counter drop
+	fi
+
+	if [ -n "$ip" ]; then
+		if [ -n "$set_v4" ]; then
+			if [ -n "$up_rate" ]; then
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" ip daddr "@$set_v4" limit rate over "$up_rate" counter drop 2>/dev/null || true
+			fi
+			if [ -n "$down_rate" ]; then
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "@$set_v4" ip daddr "$ip" limit rate over "$down_rate" counter drop 2>/dev/null || true
+			fi
+		else
+			if [ -n "$up_rate" ]; then
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" limit rate over "$up_rate" counter drop 2>/dev/null || true
+			fi
+			if [ -n "$down_rate" ]; then
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip daddr "$ip" limit rate over "$down_rate" counter drop 2>/dev/null || true
+			fi
 		fi
 	fi
 }
@@ -549,7 +556,7 @@ handle_rule() {
 				log "skip rule [$name]: no valid rate configured"
 				return 0
 			fi
-			[ -n "$resolved_ip" ] && append_limit_rule "$resolved_ip" "$name" "$up_rate" "$down_rate" "$set_v4"
+			append_limit_rule "$resolved_ip" "$name" "$up_rate" "$down_rate" "$set_v4" "$mac"
 			for resolved_ip6 in $ip6_list; do
 				append_limit_rule6 "$resolved_ip6" "$name" "$up_rate" "$down_rate" "$set_v6"
 			done
