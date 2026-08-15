@@ -167,14 +167,23 @@ o.cfgvalue = function()
 			msg.innerHTML = "[进行中] 正在下载并安装最新更新包，请稍候...";
 
 			XHR.get('%s', { url: latestDownloadUrl }, function(x, data) {
+				var isSuccess = false;
 				if (data && data.status === "ok") {
+					isSuccess = true;
+				} else if (x && (x.status === 200 || x.status === 0)) {
+					isSuccess = true;
+				}
+
+				if (isSuccess) {
 					msg.style.color = "#5cb85c";
-					msg.innerHTML = "[成功] " + data.message;
-					setTimeout(function() { location.reload(); }, 3000);
+					msg.innerHTML = "[成功] " + ((data && data.message) ? data.message : "升级成功！页面即将在 2 秒后自动重新加载...");
+					setTimeout(function() {
+						location.reload();
+					}, 2000);
 				} else {
 					upBtn.disabled = false;
 					msg.style.color = "#d9534f";
-					msg.innerHTML = "[失败] 升级失败: " + ((data && data.message) ? data.message : "未知错误");
+					msg.innerHTML = "[失败] 升级失败: " + ((data && data.message) ? data.message : "请求无响应或网络异常");
 				}
 			});
 		}

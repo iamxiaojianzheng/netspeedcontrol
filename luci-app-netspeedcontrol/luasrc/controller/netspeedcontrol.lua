@@ -48,9 +48,11 @@ function action_do_update()
 	local res = sys.exec(cmd .. " 2>&1")
 	http.prepare_content("application/json")
 	if res and res:find("SUCCESS") then
-		http.write('{"status":"ok","message":"升级成功，页面正在重新加载..."}')
+		sys.call("(sleep 2 && (/etc/init.d/uhttpd restart || /etc/init.d/nginx restart)) >/dev/null 2>&1 &")
+		http.write('{"status":"ok","message":"升级成功，页面即将在 2 秒后自动重新加载..."}')
 	else
-		http.write('{"status":"error","message":"' .. (res or "升级失败"):gsub("\n", " ") .. '"}')
+		local err_msg = (res or "升级失败"):gsub("\r\n", " "):gsub("\n", " "):gsub("\\", "\\\\"):gsub("\"", "\\\"")
+		http.write(string.format('{"status":"error","message":"%s"}', err_msg))
 	end
 end
 

@@ -758,7 +758,6 @@ do_update() {
 		rm -f "$tmp_ipk"
 		log "应用一键更新升级成功！"
 		echo "SUCCESS"
-		/etc/init.d/uhttpd restart >/dev/null 2>&1 || /etc/init.d/nginx restart >/dev/null 2>&1 || true
 		return 0
 	else
 		log "opkg 安装失败，详见 /tmp/netspeedcontrol_update.log"
