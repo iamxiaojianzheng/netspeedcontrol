@@ -22,8 +22,14 @@ command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || {
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR"
 
+PROXY="${GITHUB_PROXY:-}"
+if [ -n "$PROXY" ]; then
+    PROXY="${PROXY%/}/"
+    echo "使用 GitHub 加速代理: $PROXY"
+fi
+
 echo "正在从 GitHub Release 获取最新版本..."
-RELEASE_API="https://api.github.com/repos/${REPO}/releases/latest"
+RELEASE_API="${PROXY}https://api.github.com/repos/${REPO}/releases/latest"
 
 DOWNLOAD_URL=""
 if command -v curl >/dev/null 2>&1; then
@@ -32,9 +38,13 @@ else
     DOWNLOAD_URL=$(wget -qO- "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
 fi
 
+if [ -n "$DOWNLOAD_URL" ] && [ -n "$PROXY" ]; then
+    DOWNLOAD_URL="${PROXY}${DOWNLOAD_URL}"
+fi
+
 if [ -z "$DOWNLOAD_URL" ]; then
     echo "未能从 GitHub Releases 找不到 IPK 下载地址，尝试使用直链..."
-    DOWNLOAD_URL="https://github.com/iamxiaojianzheng/netspeedcontrol/releases/latest/download/luci-app-netspeedcontrol_0.1.0-31_all.ipk"
+    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/latest/download/luci-app-netspeedcontrol_0.1.0-32_all.ipk"
 fi
 
 IPK_FILE="${TMP_DIR}/luci-app-netspeedcontrol.ipk"

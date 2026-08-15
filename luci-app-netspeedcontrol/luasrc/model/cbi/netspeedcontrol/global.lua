@@ -127,10 +127,20 @@ end
 o = s:option(Flag, "enabled", translate("启用服务"))
 o.rmempty = false
 
+o = s:option(Value, "github_proxy", translate("GitHub 加速代理"))
+o.rmempty = true
+o.placeholder = "https://ghfast.top/"
+o.description = translate("留空表示直连。若国内环境在线检查或下载缓慢，可输入加速前缀（如 https://ghfast.top/），亦可在 /etc/profile 中导出 GITHUB_PROXY 环境变量。")
+o:value("", translate("直连 (默认)"))
+o:value("https://ghfast.top/", "https://ghfast.top/ (推荐镜像 1)")
+o:value("https://mirror.ghproxy.com/", "https://mirror.ghproxy.com/ (推荐镜像 2)")
+o:value("https://ghproxy.net/", "https://ghproxy.net/ (推荐镜像 3)")
+
 o = s:option(Flag, "log_enabled", translate("记录拦截日志"))
 o.rmempty = false
 o.default = "0"
 o.description = translate("默认关闭。开启后会按分钟生成中文拦截日志，可以在“拦截日志”页签集中查看。")
 
 return m
+
 

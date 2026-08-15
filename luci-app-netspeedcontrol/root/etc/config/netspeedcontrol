@@ -1,6 +1,7 @@
 config globals 'globals'
 	option enabled '1'
 	option log_enabled '0'
+	option github_proxy ''
 
 config rule
 	option enabled '0'

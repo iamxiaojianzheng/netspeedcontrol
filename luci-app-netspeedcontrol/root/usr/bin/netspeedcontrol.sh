@@ -683,34 +683,53 @@ clear_event_log() {
 	log "event log cleared"
 }
 
+get_github_proxy() {
+	local proxy="${GITHUB_PROXY:-}"
+	if [ -z "$proxy" ]; then
+		proxy="$(uci -q get netspeedcontrol.globals.github_proxy || true)"
+	fi
+	if [ -n "$proxy" ]; then
+		proxy="${proxy%/}/"
+	fi
+	echo "$proxy"
+}
+
 check_update() {
 	local repo="iamxiaojianzheng/netspeedcontrol"
 	local api_url="https://api.github.com/repos/${repo}/releases/latest"
+	local proxy="$(get_github_proxy)"
 	local json tag_name download_url
+
 	if command -v curl >/dev/null 2>&1; then
-		json="$(curl -sL --connect-timeout 8 "$api_url" 2>/dev/null || true)"
+		json="$(curl -sL --connect-timeout 8 "${proxy}${api_url}" 2>/dev/null || true)"
 	elif command -v wget >/dev/null 2>&1; then
-		json="$(wget -qO- --timeout=8 "$api_url" 2>/dev/null || true)"
+		json="$(wget -qO- --timeout=8 "${proxy}${api_url}" 2>/dev/null || true)"
 	fi
 
 	tag_name="$(echo "$json" | awk -F'"' '/"tag_name":/ {print $4}' | head -n1)"
 	download_url="$(echo "$json" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
 
 	if [ -n "$tag_name" ] && [ -n "$download_url" ]; then
+		[ -n "$proxy" ] && download_url="${proxy}${download_url}"
 		printf '{"status":"ok","tag_name":"%s","download_url":"%s"}\n' "$tag_name" "$download_url"
 	else
-		printf '{"status":"error","message":"无法连接 GitHub API 获取更新信息"}\n'
+		printf '{"status":"error","message":"无法连接 GitHub API 获取更新信息，若在大陆网络环境请设置 GitHub 加速代理"}\n'
 	fi
 }
 
 do_update() {
 	local download_url="$2"
 	local tmp_ipk="/tmp/netspeedcontrol_update.ipk"
+	local proxy="$(get_github_proxy)"
+
 	if [ -z "$download_url" ]; then
 		local repo="iamxiaojianzheng/netspeedcontrol"
 		local api_url="https://api.github.com/repos/${repo}/releases/latest"
 		if command -v curl >/dev/null 2>&1; then
-			download_url="$(curl -sL --connect-timeout 8 "$api_url" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
+			download_url="$(curl -sL --connect-timeout 8 "${proxy}${api_url}" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
+		fi
+		if [ -n "$download_url" ] && [ -n "$proxy" ]; then
+			download_url="${proxy}${download_url}"
 		fi
 	fi
 

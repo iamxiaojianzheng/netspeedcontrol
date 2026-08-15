@@ -12,24 +12,31 @@
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/iamxiaojianzheng/netspeedcontrol/main/install.sh)"
 ```
 
-## 📦 手动安装包
+## 🚀 一键在线安装 / 升级
 
-最新打包好的 IPK 文件位于 `dist/` 目录：
+在 OpenWrt 终端（SSH）中运行以下一键脚本：
 
 ```sh
-dist/luci-app-netspeedcontrol_0.1.0-31_all.ipk
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/iamxiaojianzheng/netspeedcontrol/main/install.sh)"
 ```
 
-把这个文件上传到路由器的 `/tmp` 目录后安装：
+> 💡 **国内网络加速**：若国内网络环境连接 GitHub 慢或超时，可指定 `GITHUB_PROXY` 环境变量：
+> ```sh
+> GITHUB_PROXY="https://ghfast.top/" sh -c "$(curl -fsSL https://ghfast.top/https://raw.githubusercontent.com/iamxiaojianzheng/netspeedcontrol/main/install.sh)"
+> ```
+
+## 📦 手动安装包
+
+在 Releases 页面下载最新 `.ipk` 文件并上传至路由器 `/tmp` 目录后安装：
 
 ```sh
-opkg install /tmp/luci-app-netspeedcontrol_0.1.0-31_all.ipk
+opkg install /tmp/luci-app-netspeedcontrol*.ipk
 ```
 
 如果 LuCI 菜单没有马上刷新，可以重启 LuCI Web 服务：
 
 ```sh
-/etc/init.d/uhttpd restart
+/etc/init.d/uhttpd restart # 或 /etc/init.d/nginx restart
 ```
 
 ## ✨ 主要功能
