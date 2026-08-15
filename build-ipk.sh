@@ -16,19 +16,13 @@ PKG_FILE="$DIST_DIR/$PKG_NAME"_"$PKG_VERSION"_"$ARCH".ipk
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/CONTROL"
 mkdir -p "$BUILD_DIR/etc"
-mkdir -p "$BUILD_DIR/usr/lib/lua/luci/controller"
-mkdir -p "$BUILD_DIR/usr/lib/lua/luci/model/cbi"
+mkdir -p "$BUILD_DIR/usr/lib/lua/luci"
 mkdir -p "$BUILD_DIR/usr/share/rpcd/acl.d"
 cp -R "$SOURCE_DIR/root/etc/config" "$BUILD_DIR/etc/"
 cp -R "$SOURCE_DIR/root/etc/init.d" "$BUILD_DIR/etc/"
 cp -R "$SOURCE_DIR/root/usr/bin" "$BUILD_DIR/usr/"
 cp -R "$SOURCE_DIR/root/usr/share" "$BUILD_DIR/usr/"
-cp "$SOURCE_DIR/luasrc/controller/netspeedcontrol.lua" \
-	"$BUILD_DIR/usr/lib/lua/luci/controller/netspeedcontrol.lua"
-cp "$SOURCE_DIR/luasrc/model/cbi/netspeedcontrol.lua" \
-	"$BUILD_DIR/usr/lib/lua/luci/model/cbi/netspeedcontrol.lua"
-cp -R "$SOURCE_DIR/luasrc/model/cbi/netspeedcontrol" \
-	"$BUILD_DIR/usr/lib/lua/luci/model/cbi/"
+cp -R "$SOURCE_DIR/luasrc/"* "$BUILD_DIR/usr/lib/lua/luci/"
 
 
 cat > "$BUILD_DIR/CONTROL/control" <<EOF

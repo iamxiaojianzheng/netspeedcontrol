@@ -1,5 +1,11 @@
 local uci = require("luci.model.uci").cursor()
-local nsc = require "luci.tools.netspeedcontrol"
+local nsc
+local ok, m = pcall(require, "luci.model.cbi.netspeedcontrol.tools")
+if ok then
+	nsc = m
+else
+	nsc = require "luci.tools.netspeedcontrol"
+end
 local TypedSection = TypedSection or luci.cbi.TypedSection
 
 local online_devices = nsc.load_online_devices()
