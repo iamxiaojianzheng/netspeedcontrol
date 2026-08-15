@@ -178,19 +178,9 @@ rate_to_nft_bytes() {
 	fi
 
 	if echo "$raw_rate" | grep -qi "m"; then
-		# 兆比特(Mbps) 转 字节速率(MB/s 或 KB/s): 1 Byte = 8 Bits
-		local mbytes=$(( rate / 8 ))
-		if [ "$mbytes" -ge 1 ]; then
-			echo "${mbytes} mbytes/second"
-		else
-			local kbytes=$(( rate * 1024 / 8 ))
-			echo "${kbytes} kbytes/second"
-		fi
+		echo "${rate} mbytes/second"
 	else
-		# 千比特(kbit/s) 转 字节速率(kbytes/second)
-		local kbytes=$(( (rate + 7) / 8 ))
-		[ "$kbytes" -lt 1 ] && kbytes=1
-		echo "${kbytes} kbytes/second"
+		echo "${rate} kbytes/second"
 	fi
 }
 
