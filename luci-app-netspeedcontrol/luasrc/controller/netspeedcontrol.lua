@@ -17,6 +17,28 @@ function index()
 	entry({"admin", "network", "netspeedcontrol", "get_log"}, call("action_get_log")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "clear_log"}, call("action_clear_log")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "add_rule"}, call("action_add_rule")).leaf = true
+	entry({"admin", "network", "netspeedcontrol", "toggle_rule"}, call("action_toggle_rule")).leaf = true
+end
+
+function action_toggle_rule()
+	local uci = require("luci.model.uci").cursor()
+	local http = require "luci.http"
+	local sys = require "luci.sys"
+
+	local sid = http.formvalue("sid") or ""
+	local enabled = http.formvalue("enabled") or "0"
+
+	http.prepare_content("application/json")
+
+	if sid ~= "" and uci:get("netspeedcontrol", sid) then
+		uci:set("netspeedcontrol", sid, "enabled", enabled)
+		uci:commit("netspeedcontrol")
+		sys.call("rm -rf /tmp/.uci/netspeedcontrol* 2>/dev/null")
+		sys.call("/etc/init.d/netspeedcontrol reload >/dev/null 2>&1 || /usr/bin/netspeedcontrol.sh apply >/dev/null 2>&1")
+		http.write('{"status":"ok"}')
+	else
+		http.write('{"status":"error","message":"规则不存在"}')
+	end
 end
 
 function action_clear_log()

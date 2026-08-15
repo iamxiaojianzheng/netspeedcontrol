@@ -5,7 +5,7 @@ local m, s, o
 
 local APP_VERSION = sys.exec("opkg status luci-app-netspeedcontrol 2>/dev/null | awk '/Version:/ {print $2}' | head -n1 | tr -d '\n'")
 if not APP_VERSION or APP_VERSION == "" then
-	APP_VERSION = "0.2.3-19"
+	APP_VERSION = "0.2.3-20"
 end
 
 local function apply_now()

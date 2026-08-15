@@ -407,6 +407,33 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 			if (e.target && e.target.id && e.target.id.indexOf(".target_scope") !== -1) {
 				updateTableScopeDependencies();
 			}
+
+			// 自动化代理表格中的【状态】开关无感极速切换
+			if (e.target && e.target.name && e.target.name.indexOf(".enabled") !== -1 && e.target.type === "checkbox") {
+				var inputName = e.target.name;
+				var sid = "";
+				var match = inputName.match(/netspeedcontrol\.([^.]+)\.enabled/);
+				if (match && match[1]) {
+					sid = match[1];
+				} else {
+					var parts = inputName.split(".");
+					for (var i = 0; i < parts.length; i++) {
+						if (i > 0 && parts[i-1] === "netspeedcontrol") {
+							sid = parts[i];
+							break;
+						}
+					}
+				}
+				if (sid) {
+					var enabledVal = e.target.checked ? "1" : "0";
+					var formData = new FormData();
+					formData.append("sid", sid);
+					formData.append("enabled", enabledVal);
+					XHR.post('<%=url("admin/network/netspeedcontrol/toggle_rule")%>', formData, function(x, res) {
+						// 状态秒级异步提交并重载防护链成功
+					});
+				}
+			}
 		});
 	});
 </script>
