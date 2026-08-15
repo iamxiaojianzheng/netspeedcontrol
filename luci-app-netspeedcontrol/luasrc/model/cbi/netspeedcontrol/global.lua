@@ -61,15 +61,15 @@ o.rawhtml = true
 o.cfgvalue = function()
 	local check_url = luci.dispatcher.build_url("admin", "network", "netspeedcontrol", "check_update")
 	local update_url = luci.dispatcher.build_url("admin", "network", "netspeedcontrol", "do_update")
-	return [[
+	return string.format([[
 	<div style="padding:6px 0;">
-		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">🔍 ]] .. translate("检查更新") .. [[</button>
+		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">🔍 %s</button>
 		<span id="update-msg" style="margin-left:12px; font-weight:bold; color:#555;"></span>
-		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">🚀 ]] .. translate("一键在线升级") .. [[</button>
+		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">🚀 %s</button>
 	</div>
-	<script type="text/javascript">//<![CDATA[
+	<script type="text/javascript">
 		var latestDownloadUrl = "";
-		var currentVer = "]]" .. APP_VERSION .. [[";
+		var currentVer = "%s";
 
 		function checkAppUpdate() {
 			var btn = document.getElementById("btn-check-update");
@@ -80,7 +80,7 @@ o.cfgvalue = function()
 			msg.innerHTML = "正在连接 GitHub 检查最新版本...";
 			upBtn.style.display = "none";
 
-			XHR.get(']] .. check_url .. [[', null, function(x, data) {
+			XHR.get('%s', null, function(x, data) {
 				btn.disabled = false;
 				if (data && data.status === "ok") {
 					var remoteVer = data.tag_name ? data.tag_name.replace(/^v/, '') : '';
@@ -108,7 +108,7 @@ o.cfgvalue = function()
 			msg.style.color = "#0275d8";
 			msg.innerHTML = "⌛ 正在下载并安装最新更新包，请稍候...";
 
-			XHR.get(']] .. update_url .. [[', { url: latestDownloadUrl }, function(x, data) {
+			XHR.get('%s', { url: latestDownloadUrl }, function(x, data) {
 				if (data && data.status === "ok") {
 					msg.style.color = "#5cb85c";
 					msg.innerHTML = "✔ " + data.message;
@@ -120,8 +120,8 @@ o.cfgvalue = function()
 				}
 			});
 		}
-	//]]></script>
-	]]
+	</script>
+	]], translate("检查更新"), translate("一键在线升级"), APP_VERSION, check_url, update_url)
 end
 
 o = s:option(Flag, "enabled", translate("启用服务"))

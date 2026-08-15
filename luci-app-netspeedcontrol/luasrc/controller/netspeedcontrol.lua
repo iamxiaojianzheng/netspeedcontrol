@@ -31,7 +31,7 @@ function action_do_update()
 	local cmd = "/usr/bin/netspeedcontrol.sh do_update"
 	if url ~= "" then
 		cmd = cmd .. " '" .. url:gsub("'", "") .. "'"
-	fi
+	end
 	local res = sys.exec(cmd .. " 2>&1")
 	http.prepare_content("application/json")
 	if res and res:find("SUCCESS") then
