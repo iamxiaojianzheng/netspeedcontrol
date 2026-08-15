@@ -33,16 +33,16 @@ s.anonymous = true
 s.template = "cbi/tblsection"
 
 o = s:option(Flag, "enabled", translate("启用"))
-o.rmempty = false
+o.rmempty = true
 
 o = s:option(Value, "name", translate("规则名称"))
 o.placeholder = "KidPhone"
-o.rmempty = false
+o.rmempty = true
 
 o = s:option(ListValue, "mac", translate("受控设备"))
 o:value("", translate("请选择设备"))
 o:value("CUSTOM", translate("[+] 手动填写 MAC..."))
-o.rmempty = false
+o.rmempty = true
 
 for _, device in ipairs(online_devices) do
 	o:value(device.mac, nsc.device_label(device))
@@ -92,14 +92,14 @@ o = s:option(ListValue, "mode", translate("控制方式"))
 o:value("block", translate("定时断网"))
 o:value("limit", translate("定时限速"))
 o.default = "block"
-o.rmempty = false
+o.rmempty = true
 
 o = s:option(ListValue, "target_scope", translate("控制范围"))
 o:value("all", translate("全网流量"))
 o:value("app", translate("指定应用"))
 o:value("custom_domain", translate("自定义域名"))
 o.default = "all"
-o.rmempty = false
+o.rmempty = true
 
 o = s:option(ListValue, "app_category", translate("应用分类"))
 o:value("short_video", translate("短视频/直播"))
@@ -127,8 +127,14 @@ function o.cfgvalue(self, section)
 	return (v and v ~= "") and v or "21:00"
 end
 
-function o.validate(self, value)
-	local v = (value or ""):gsub("^%s*(.-)%s*$", "%1")
+function o.validate(self, value, section)
+	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
+		return value
+	end
+	if not value or value == "" then
+		return "21:00"
+	end
+	local v = value:gsub("^%s*(.-)%s*$", "%1")
 	if v == "" then
 		return "21:00"
 	end
@@ -148,8 +154,14 @@ function o.cfgvalue(self, section)
 	return (v and v ~= "") and v or "07:00"
 end
 
-function o.validate(self, value)
-	local v = (value or ""):gsub("^%s*(.-)%s*$", "%1")
+function o.validate(self, value, section)
+	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
+		return value
+	end
+	if not value or value == "" then
+		return "07:00"
+	end
+	local v = value:gsub("^%s*(.-)%s*$", "%1")
 	if v == "" then
 		return "07:00"
 	end
@@ -163,7 +175,10 @@ o = s:option(Value, "up_kbit", translate("上传限速"))
 o.placeholder = "256k"
 o:depends("mode", "limit")
 
-function o.validate(self, value)
+function o.validate(self, value, section)
+	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
+		return value
+	end
 	if not value or value == "" then return "" end
 	local parsed = nsc.parse_rate_value(value)
 	if not parsed then
@@ -176,7 +191,10 @@ o = s:option(Value, "down_kbit", translate("下载限速"))
 o.placeholder = "1024k"
 o:depends("mode", "limit")
 
-function o.validate(self, value)
+function o.validate(self, value, section)
+	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
+		return value
+	end
 	if not value or value == "" then return "" end
 	local parsed = nsc.parse_rate_value(value)
 	if not parsed then
