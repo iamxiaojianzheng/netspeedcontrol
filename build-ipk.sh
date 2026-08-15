@@ -4,9 +4,11 @@ set -eu
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PKG_NAME="luci-app-netspeedcontrol"
-PKG_VERSION="0.1.0-31"
-ARCH="all"
 SOURCE_DIR="$ROOT_DIR/$PKG_NAME"
+VER="$(grep -E '^PKG_VERSION:=' "$SOURCE_DIR/Makefile" | cut -d'=' -f2 | tr -d ' ')"
+REL="$(grep -E '^PKG_RELEASE:=' "$SOURCE_DIR/Makefile" | cut -d'=' -f2 | tr -d ' ')"
+PKG_VERSION="${VER:-0.1.0}-${REL:-1}"
+ARCH="all"
 BUILD_DIR="$ROOT_DIR/.ipkbuild/$PKG_NAME"
 DIST_DIR="$ROOT_DIR/dist"
 TMP_DIR="$ROOT_DIR/.ipkbuild/tmp"
@@ -29,9 +31,9 @@ cp -R "$SOURCE_DIR/luasrc/model/cbi/netspeedcontrol" \
 	"$BUILD_DIR/usr/lib/lua/luci/model/cbi/"
 
 
-cat > "$BUILD_DIR/CONTROL/control" <<'EOF'
+cat > "$BUILD_DIR/CONTROL/control" <<EOF
 Package: luci-app-netspeedcontrol
-Version: 0.1.0-31
+Version: $PKG_VERSION
 Depends: luci-base, luci-compat, nftables, firewall4
 Source: local
 License: MIT

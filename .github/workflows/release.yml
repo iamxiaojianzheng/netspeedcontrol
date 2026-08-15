@@ -39,6 +39,7 @@ jobs:
           FULL_VERSION="${VERSION}-${RELEASE}"
           echo "pkg_name=$PKG_NAME" >> $GITHUB_OUTPUT
           echo "pkg_version=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v${FULL_VERSION}" >> $GITHUB_OUTPUT
           echo "IPK Package Name: ${PKG_NAME}_${FULL_VERSION}_all.ipk"
 
       - name: Grant Execute Permission

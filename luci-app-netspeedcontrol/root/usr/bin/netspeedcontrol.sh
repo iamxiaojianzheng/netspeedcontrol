@@ -683,6 +683,70 @@ clear_event_log() {
 	log "event log cleared"
 }
 
+check_update() {
+	local repo="iamxiaojianzheng/netspeedcontrol"
+	local api_url="https://api.github.com/repos/${repo}/releases/latest"
+	local json tag_name download_url
+	if command -v curl >/dev/null 2>&1; then
+		json="$(curl -sL --connect-timeout 8 "$api_url" 2>/dev/null || true)"
+	elif command -v wget >/dev/null 2>&1; then
+		json="$(wget -qO- --timeout=8 "$api_url" 2>/dev/null || true)"
+	fi
+
+	tag_name="$(echo "$json" | awk -F'"' '/"tag_name":/ {print $4}' | head -n1)"
+	download_url="$(echo "$json" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
+
+	if [ -n "$tag_name" ] && [ -n "$download_url" ]; then
+		printf '{"status":"ok","tag_name":"%s","download_url":"%s"}\n' "$tag_name" "$download_url"
+	else
+		printf '{"status":"error","message":"无法连接 GitHub API 获取更新信息"}\n'
+	fi
+}
+
+do_update() {
+	local download_url="$2"
+	local tmp_ipk="/tmp/netspeedcontrol_update.ipk"
+	if [ -z "$download_url" ]; then
+		local repo="iamxiaojianzheng/netspeedcontrol"
+		local api_url="https://api.github.com/repos/${repo}/releases/latest"
+		if command -v curl >/dev/null 2>&1; then
+			download_url="$(curl -sL --connect-timeout 8 "$api_url" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
+		fi
+	fi
+
+	if [ -z "$download_url" ]; then
+		log "更新失败：未找到有效安装包链接"
+		echo "ERROR: Missing download URL"
+		return 1
+	fi
+
+	log "开始在线升级，下载包: $download_url"
+	if command -v curl >/dev/null 2>&1; then
+		curl -sL "$download_url" -o "$tmp_ipk"
+	else
+		wget -qO "$tmp_ipk" "$download_url"
+	fi
+
+	if [ ! -s "$tmp_ipk" ]; then
+		log "更新失败：下载的 IPK 文件为空"
+		echo "ERROR: Downloaded IPK file is empty"
+		return 1
+	fi
+
+	log "正在安装更新包..."
+	if opkg install --force-reinstall "$tmp_ipk" >/tmp/netspeedcontrol_update.log 2>&1; then
+		rm -f "$tmp_ipk"
+		log "应用一键更新升级成功！"
+		echo "SUCCESS"
+		/etc/init.d/uhttpd restart >/dev/null 2>&1 || /etc/init.d/nginx restart >/dev/null 2>&1 || true
+		return 0
+	else
+		log "opkg 安装失败，详见 /tmp/netspeedcontrol_update.log"
+		echo "ERROR: opkg install failed"
+		return 1
+	fi
+}
+
 show_status() {
 	local table_dump section name mac mode ip ip6
 	echo "=== Netspeedcontrol Service Status ==="
@@ -732,6 +796,12 @@ case "${1:-apply}" in
 	clear_log)
 		clear_event_log
 	;;
+	check_update)
+		check_update
+	;;
+	do_update)
+		do_update "$@"
+	;;
 	status)
 		show_status
 	;;
@@ -739,8 +809,9 @@ case "${1:-apply}" in
 		daemon_loop
 	;;
 	*)
-		echo "Usage: $0 {apply|clear|clear_log|status|daemon}" >&2
+		echo "Usage: $0 {apply|clear|clear_log|check_update|do_update|status|daemon}" >&2
 		exit 1
 	;;
 esac
+
 
