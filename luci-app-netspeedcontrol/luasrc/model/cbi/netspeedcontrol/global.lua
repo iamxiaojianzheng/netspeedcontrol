@@ -192,7 +192,6 @@ o.description = translate("留空表示直连。若国内环境在线检查或�
 o:value("", translate("直连 (默认)"))
 o:value("https://ghfast.top/", "https://ghfast.top/")
 o:value("https://v4.gh-proxy.org/", "https://v4.gh-proxy.org/")
-o:value("https://ghproxy.net/", "https://ghproxy.net/")
 o:value("https://gh.xmly.dev/", "https://gh.xmly.dev/")
 
 o = s:option(Flag, "log_enabled", translate("记录拦截日志"))
