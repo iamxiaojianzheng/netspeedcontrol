@@ -22,9 +22,9 @@ local online_devices = nsc.load_online_devices()
 .nsc-form-label { display:block; font-size:12px; font-weight:bold; color:#2d3748; margin-bottom:4px; }
 .nsc-form-control { width:100% !important; max-width:100% !important; padding:7px 10px; border:1px solid #cbd5e0; border-radius:4px; font-size:13px; color:#1a202c; background:#ffffff; margin:0 !important; }
 .nsc-form-control::placeholder { color:#718096 !important; opacity:1 !important; }
-.nsc-weekday-group { display:flex !important; flex-wrap:wrap !important; gap:12px !important; align-items:center !important; margin-bottom:6px !important; background:#f7fafc !important; padding:8px 12px !important; border-radius:4px !important; border:1px solid #e2e8f0 !important; }
-.nsc-weekday-item { display:inline-flex !important; align-items:center !important; font-size:12px !important; color:#2d3748 !important; cursor:pointer !important; user-select:none !important; line-height:1 !important; }
-.nsc-weekday-item input[type="checkbox"] { margin:0 4px 0 0 !important; vertical-align:middle !important; cursor:pointer !important; }
+.nsc-weekday-group { display:flex !important; flex-wrap:wrap !important; gap:14px !important; align-items:center !important; margin-bottom:6px !important; background:#f7fafc !important; padding:10px 14px !important; border-radius:4px !important; border:1px solid #e2e8f0 !important; }
+.nsc-weekday-item { display:inline-flex !important; align-items:center !important; justify-content:center !important; font-size:13px !important; color:#2d3748 !important; cursor:pointer !important; user-select:none !important; line-height:1 !important; height:22px !important; margin:0 !important; }
+.nsc-weekday-item input[type="checkbox"] { appearance:auto !important; -webkit-appearance:checkbox !important; margin:0 6px 0 0 !important; padding:0 !important; width:15px !important; height:15px !important; cursor:pointer !important; vertical-align:middle !important; position:relative !important; top:0 !important; align-self:center !important; }
 .nsc-btn-group { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:12px; border-top:1px solid #e2e8f0; }
 .nsc-preset-btn { padding:4px 8px; font-size:11px; margin-right:6px; border-radius:4px; border:1px solid #cbd5e0; background:#f7fafc; cursor:pointer; color:#2d3748; }
 .nsc-preset-btn:hover { background:#edf2f7; border-color:#cbd5e0; }
@@ -32,6 +32,7 @@ local online_devices = nsc.load_online_devices()
 /* CBI 表格宽度与控制列优化 */
 input[id$='._custom_mac'] { min-width: 170px !important; width: 170px !important; font-family: monospace; }
 input[id$='.custom_domains'] { min-width: 180px !important; }
+select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: not-allowed !important; color: #a0aec0 !important; opacity: 0.6 !important; }
 </style>
 
 <!-- NSC Modal 模态弹窗 -->
@@ -269,6 +270,40 @@ input[id$='.custom_domains'] { min-width: 180px !important; }
 		xhr.send(formData);
 	}
 
+	function updateTableScopeDependencies() {
+		var scopeSelects = document.querySelectorAll("select[id$='.target_scope']");
+		for (var s = 0; s < scopeSelects.length; s++) {
+			var scopeSel = scopeSelects[s];
+			var id = scopeSel.id;
+			var prefix = id.replace(/\.target_scope$/, "");
+			var val = scopeSel.value;
+
+			var appSel = document.getElementById(prefix + ".app_category");
+			var domainInput = document.getElementById(prefix + ".custom_domains");
+
+			if (appSel) {
+				if (val === "app") {
+					appSel.disabled = false;
+					if (appSel.value === "") appSel.value = "short_video";
+				} else {
+					appSel.value = "";
+					appSel.disabled = true;
+				}
+			}
+
+			if (domainInput) {
+				if (val === "custom_domain") {
+					domainInput.disabled = false;
+					domainInput.placeholder = "例如: baidu.com";
+				} else {
+					domainInput.value = "";
+					domainInput.disabled = true;
+					domainInput.placeholder = "";
+				}
+			}
+		}
+	}
+
 	window.addEventListener("DOMContentLoaded", function() {
 		var bindCbiAddButton = function() {
 			var btns = document.querySelectorAll("input[name^='cbi.cts.'], button[name^='cbi.cts.'], input.cbi-button-add, button.cbi-button-add");
@@ -289,5 +324,12 @@ input[id$='.custom_domains'] { min-width: 180px !important; }
 		};
 		bindCbiAddButton();
 		setTimeout(bindCbiAddButton, 300);
+
+		updateTableScopeDependencies();
+		document.addEventListener("change", function(e) {
+			if (e.target && e.target.id && e.target.id.indexOf(".target_scope") !== -1) {
+				updateTableScopeDependencies();
+			}
+		});
 	});
 </script>

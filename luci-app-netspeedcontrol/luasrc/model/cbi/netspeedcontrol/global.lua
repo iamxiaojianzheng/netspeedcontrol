@@ -5,7 +5,7 @@ local m, s, o
 
 local APP_VERSION = sys.exec("opkg status luci-app-netspeedcontrol 2>/dev/null | awk '/Version:/ {print $2}' | head -n1 | tr -d '\n'")
 if not APP_VERSION or APP_VERSION == "" then
-	APP_VERSION = "0.2.3-10"
+	APP_VERSION = "0.2.3-11"
 end
 
 local function apply_now()
@@ -121,9 +121,9 @@ o.cfgvalue = function()
 	local update_url = luci.dispatcher.build_url("admin", "network", "netspeedcontrol", "do_update")
 	return string.format([[
 	<div style="padding:6px 0;">
-		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">[ 检查在线更新 ]</button>
+		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">检查在线更新</button>
 		<span id="update-msg" style="margin-left:12px; font-weight:bold; color:#555;"></span>
-		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">[ 立即在线升级 ]</button>
+		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">立即在线升级</button>
 	</div>
 	<script type="text/javascript">
 		var latestDownloadUrl = "";

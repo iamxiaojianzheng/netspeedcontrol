@@ -104,11 +104,12 @@ o.default = "all"
 o.rmempty = true
 
 o = s:option(ListValue, "app_category", translate("应用分类"))
+o:value("", translate("-- 不适用 --"))
 o:value("short_video", translate("短视频/直播"))
 o:value("gaming", translate("网络游戏"))
 o:value("video", translate("影视视频"))
 o:value("social", translate("社交聊天"))
-o.default = "short_video"
+o.default = ""
 o:depends("target_scope", "app")
 
 function o.cfgvalue(self, section)
@@ -116,7 +117,8 @@ function o.cfgvalue(self, section)
 	if scope ~= "app" then
 		return ""
 	end
-	return uci:get("netspeedcontrol", section, "app_category") or "short_video"
+	local v = uci:get("netspeedcontrol", section, "app_category")
+	return (v and v ~= "") and v or "short_video"
 end
 
 o = s:option(Value, "custom_domains", translate("自定义域名"))
