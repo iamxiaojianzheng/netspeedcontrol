@@ -137,13 +137,16 @@ o_modal.cfgvalue = function()
 	local html = {}
 	table.insert(html, "<style>")
 	table.insert(html, ".nsc-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }")
-	table.insert(html, ".nsc-modal-dialog { background:#ffffff; border-radius:8px; width:540px; max-width:92%; padding:20px 24px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; box-sizing:border-box; }")
+	table.insert(html, ".nsc-modal-dialog { background:#ffffff; border-radius:8px; width:540px; max-width:92%; padding:20px 24px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; box-sizing:border-box; overflow:hidden; }")
+	table.insert(html, ".nsc-modal-dialog * { box-sizing:border-box !important; }")
 	table.insert(html, ".nsc-modal-title { font-size:16px; font-weight:bold; color:#2d3748; padding-bottom:12px; border-bottom:1px solid #e2e8f0; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }")
 	table.insert(html, ".nsc-modal-close { font-size:18px; cursor:pointer; color:#a0aec0; }")
 	table.insert(html, ".nsc-modal-close:hover { color:#e53e3e; }")
-	table.insert(html, ".nsc-form-group { margin-bottom:12px; }")
+	table.insert(html, ".nsc-form-group { margin-bottom:12px; width:100%; }")
+	table.insert(html, ".nsc-form-row-2 { display:grid !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; gap:12px !important; width:100% !important; margin-bottom:12px; }")
+	table.insert(html, ".nsc-form-row-2 > div { min-width:0 !important; width:100% !important; }")
 	table.insert(html, ".nsc-form-label { display:block; font-size:12px; font-weight:bold; color:#2d3748; margin-bottom:4px; }")
-	table.insert(html, ".nsc-form-control { width:100%; padding:7px 10px; border:1px solid #cbd5e0; border-radius:4px; box-sizing:border-box; font-size:13px; color:#1a202c; background:#ffffff; }")
+	table.insert(html, ".nsc-form-control { width:100% !important; max-width:100% !important; padding:7px 10px; border:1px solid #cbd5e0; border-radius:4px; font-size:13px; color:#1a202c; background:#ffffff; margin:0 !important; }")
 	table.insert(html, ".nsc-form-control::placeholder { color:#718096 !important; opacity:1 !important; }")
 	table.insert(html, ".nsc-btn-group { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:12px; border-top:1px solid #e2e8f0; }")
 	table.insert(html, ".nsc-preset-btn { padding:4px 8px; font-size:11px; margin-right:6px; border-radius:4px; border:1px solid #cbd5e0; background:#f7fafc; cursor:pointer; color:#2d3748; }")
@@ -189,15 +192,15 @@ o_modal.cfgvalue = function()
 				<input type="text" id="modal_custom_mac" class="nsc-form-control" placeholder="AA:BB:CC:DD:EE:FF">
 			</div>
 
-			<div class="nsc-form-group" style="display:flex; gap:12px;">
-				<div style="flex:1;">
+			<div class="nsc-form-row-2">
+				<div>
 					<label class="nsc-form-label">控制方式</label>
 					<select id="modal_rule_mode" class="nsc-form-control" onchange="toggleModalLimitOptions(this)">
 						<option value="block" selected>设定时间内断网</option>
 						<option value="limit">设定时间内限速</option>
 					</select>
 				</div>
-				<div style="flex:1;">
+				<div>
 					<label class="nsc-form-label">控制范围</label>
 					<select id="modal_rule_scope" class="nsc-form-control" onchange="toggleModalScopeOptions(this)">
 						<option value="all" selected>全网流量 (所有访问)</option>
@@ -208,13 +211,13 @@ o_modal.cfgvalue = function()
 			</div>
 
 			<!-- 限速配置项：当控制方式为“设定时间内限速”时展开 -->
-			<div class="nsc-form-group" id="modal_limit_group" style="display:none;">
-				<div style="display:flex; gap:12px;">
-					<div style="flex:1;">
+			<div id="modal_limit_group" style="display:none;">
+				<div class="nsc-form-row-2">
+					<div>
 						<label class="nsc-form-label">上传限速 (如 256k 或 1M)</label>
 						<input type="text" id="modal_rule_up" class="nsc-form-control" placeholder="例如：256k 或 1M">
 					</div>
-					<div style="flex:1;">
+					<div>
 						<label class="nsc-form-label">下载限速 (如 1024k 或 2M)</label>
 						<input type="text" id="modal_rule_down" class="nsc-form-control" placeholder="例如：1024k 或 2M">
 					</div>
@@ -245,12 +248,12 @@ o_modal.cfgvalue = function()
 				</div>
 			</div>
 
-			<div class="nsc-form-group" style="display:flex; gap:12px;">
-				<div style="flex:1;">
+			<div class="nsc-form-row-2">
+				<div>
 					<label class="nsc-form-label">开始时间 (24小时制)</label>
 					<input type="text" id="modal_rule_start" class="nsc-form-control" value="21:00" placeholder="21:00">
 				</div>
-				<div style="flex:1;">
+				<div>
 					<label class="nsc-form-label">结束时间 (跨天自动兼容)</label>
 					<input type="text" id="modal_rule_stop" class="nsc-form-control" value="07:00" placeholder="07:00">
 				</div>
