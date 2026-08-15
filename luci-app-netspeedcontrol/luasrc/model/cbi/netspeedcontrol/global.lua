@@ -26,7 +26,6 @@ s.anonymous = true
 o = s:option(DummyValue, "_status", translate("服务运行状态"))
 o.rawhtml = true
 o.cfgvalue = function()
-	-- 先尝试 pgrep（快速路径），回退到 /proc 遍历（兼容无 pgrep 的精简固件）
 	local pid = sys.exec("pgrep -f 'netspeedcontrol.sh daemon' 2>/dev/null | head -n1 | tr -d '\n'") or ""
 	if pid == "" then
 		local proc_list = sys.exec("ls /proc 2>/dev/null") or ""
@@ -44,28 +43,87 @@ o.cfgvalue = function()
 	end
 
 	local is_running = (pid ~= "")
-	local status_html
+	
+	-- 统计已配置规则数量
+	local total_rules = 0
+	local enabled_rules = 0
+	uci:foreach("netspeedcontrol", "rule", function(sec)
+		total_rules = total_rules + 1
+		if sec.enabled == "1" then
+			enabled_rules = enabled_rules + 1
+		end
+	end)
 
+	local html = {}
+	table.insert(html, "<style>")
+	table.insert(html, ".nsc-hero-card { display: flex; flex-wrap: wrap; gap: 16px; margin: 6px 0; padding: 14px 18px; border: 1px solid #e2e8f0; border-radius: 8px; background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }")
+	table.insert(html, ".nsc-hero-item { display: flex; align-items: center; min-width: 180px; }")
+	table.insert(html, ".nsc-hero-icon-box { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; margin-right: 12px; }")
+	table.insert(html, ".nsc-hero-icon-green { background: #e6fffa; color: #234e52; border: 1px solid #b2f5ea; }")
+	table.insert(html, ".nsc-hero-icon-red { background: #fff5f5; color: #742a2a; border: 1px solid #fed7d7; }")
+	table.insert(html, ".nsc-hero-icon-blue { background: #ebf8ff; color: #2b6cb0; border: 1px solid #bee3f8; }")
+	table.insert(html, ".nsc-hero-title { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; }")
+	table.insert(html, ".nsc-hero-value { font-size: 15px; font-weight: bold; color: #2d3748; margin-top: 1px; }")
+	table.insert(html, ".nsc-status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }")
+	table.insert(html, ".nsc-indicator-on { background-color: #38a169; box-shadow: 0 0 6px rgba(56,161,105,0.6); }")
+	table.insert(html, ".nsc-indicator-off { background-color: #e53e3e; }")
+	table.insert(html, "</style>")
+
+	table.insert(html, "<div class=\"nsc-hero-card\">")
 
 	if is_running then
-		status_html = "<span style=\"color:green; font-weight:bold;\">✔ " .. translate("运行中") .. " (PID: " .. pid .. ")</span>"
+		table.insert(html, string.format([[
+			<div class="nsc-hero-item">
+				<div class="nsc-hero-icon-box nsc-hero-icon-green"><span class="nsc-status-indicator nsc-indicator-on"></span>RUN</div>
+				<div>
+					<div class="nsc-hero-title">%s</div>
+					<div class="nsc-hero-value" style="color:#276749;">%s (PID: %s)</div>
+				</div>
+			</div>
+		]], translate("服务状态"), translate("运行中"), pid))
 	else
-		status_html = "<span style=\"color:red; font-weight:bold;\">✘ " .. translate("已停止") .. "</span>"
+		table.insert(html, string.format([[
+			<div class="nsc-hero-item">
+				<div class="nsc-hero-icon-box nsc-hero-icon-red"><span class="nsc-status-indicator nsc-indicator-off"></span>OFF</div>
+				<div>
+					<div class="nsc-hero-title">%s</div>
+					<div class="nsc-hero-value" style="color:#9b2c2c;">%s</div>
+				</div>
+			</div>
+		]], translate("服务状态"), translate("未运行")))
 	end
 
-	return "<div style=\"padding:4px 0;\">" .. status_html .. "<span style=\"margin-left:15px; font-weight:normal;\">" .. translate("当前版本：") .. "<strong>" .. APP_VERSION .. "</strong></span></div>"
+	table.insert(html, string.format([[
+		<div class="nsc-hero-item">
+			<div class="nsc-hero-icon-box nsc-hero-icon-blue">VER</div>
+			<div>
+				<div class="nsc-hero-title">%s</div>
+				<div class="nsc-hero-value">%s</div>
+			</div>
+		</div>
+		<div class="nsc-hero-item">
+			<div class="nsc-hero-icon-box nsc-hero-icon-blue">RULE</div>
+			<div>
+				<div class="nsc-hero-title">%s</div>
+				<div class="nsc-hero-value">%d / %d</div>
+			</div>
+		</div>
+	</div>
+	]], translate("当前版本"), APP_VERSION, translate("生效规则数"), enabled_rules, total_rules))
+
+	return table.concat(html, "\n")
 end
 
-o = s:option(DummyValue, "_update_panel", translate("版本与更新"))
+o = s:option(DummyValue, "_update_panel", translate("版本与检查更新"))
 o.rawhtml = true
 o.cfgvalue = function()
 	local check_url = luci.dispatcher.build_url("admin", "network", "netspeedcontrol", "check_update")
 	local update_url = luci.dispatcher.build_url("admin", "network", "netspeedcontrol", "do_update")
 	return string.format([[
 	<div style="padding:6px 0;">
-		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">🔍 %s</button>
+		<button type="button" class="cbi-button cbi-button-apply" id="btn-check-update" onclick="checkAppUpdate()">[ 检查在线更新 ]</button>
 		<span id="update-msg" style="margin-left:12px; font-weight:bold; color:#555;"></span>
-		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">🚀 %s</button>
+		<button type="button" class="cbi-button cbi-button-save" id="btn-do-update" style="display:none; margin-left:12px;" onclick="doAppUpdate()">[ 立即在线升级 ]</button>
 	</div>
 	<script type="text/javascript">
 		var latestDownloadUrl = "";
@@ -87,11 +145,11 @@ o.cfgvalue = function()
 					latestDownloadUrl = data.download_url || '';
 					if (remoteVer && remoteVer !== currentVer) {
 						msg.style.color = "#d9534f";
-						msg.innerHTML = "发现新版本: <strong>" + data.tag_name + "</strong>";
+						msg.innerHTML = "发现新版本: " + data.tag_name;
 						upBtn.style.display = "inline-block";
 					} else {
 						msg.style.color = "#5cb85c";
-						msg.innerHTML = "✔ 当前已是最新版本 (" + currentVer + ")";
+						msg.innerHTML = "[最新] 当前已是最新版本 (" + currentVer + ")";
 					}
 				} else {
 					msg.style.color = "#f0ad4e";
@@ -106,22 +164,22 @@ o.cfgvalue = function()
 			var msg = document.getElementById("update-msg");
 			upBtn.disabled = true;
 			msg.style.color = "#0275d8";
-			msg.innerHTML = "⌛ 正在下载并安装最新更新包，请稍候...";
+			msg.innerHTML = "[进行中] 正在下载并安装最新更新包，请稍候...";
 
 			XHR.get('%s', { url: latestDownloadUrl }, function(x, data) {
 				if (data && data.status === "ok") {
 					msg.style.color = "#5cb85c";
-					msg.innerHTML = "✔ " + data.message;
+					msg.innerHTML = "[成功] " + data.message;
 					setTimeout(function() { location.reload(); }, 3000);
 				} else {
 					upBtn.disabled = false;
 					msg.style.color = "#d9534f";
-					msg.innerHTML = "❌ 升级失败: " + ((data && data.message) ? data.message : "未知错误");
+					msg.innerHTML = "[失败] 升级失败: " + ((data && data.message) ? data.message : "未知错误");
 				}
 			});
 		}
 	</script>
-	]], translate("检查更新"), translate("一键在线升级"), APP_VERSION, check_url, update_url)
+	]], APP_VERSION, check_url, update_url)
 end
 
 o = s:option(Flag, "enabled", translate("启用服务"))
@@ -143,5 +201,6 @@ o.default = "0"
 o.description = translate("默认关闭。开启后会按分钟生成中文拦截日志，可以在“拦截日志”页签集中查看。")
 
 return m
+
 
 

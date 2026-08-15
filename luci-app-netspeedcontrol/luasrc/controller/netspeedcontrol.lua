@@ -14,6 +14,19 @@ function index()
 
 	entry({"admin", "network", "netspeedcontrol", "check_update"}, call("action_check_update")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "do_update"}, call("action_do_update")).leaf = true
+	entry({"admin", "network", "netspeedcontrol", "get_log"}, call("action_get_log")).leaf = true
+end
+
+function action_get_log()
+	local sys = require "luci.sys"
+	local http = require "luci.http"
+	local util = require "luci.util"
+	local logs = sys.exec("sed '1!G;h;$!d' /tmp/netspeedcontrol-events.log 2>/dev/null") or ""
+	http.prepare_content("application/json")
+	
+	-- 使用简易 string format 输出 JSON，消除对第三方 jsonc 的强依赖
+	local safe_log = logs:gsub("\\", "\\\\"):gsub("\"", "\\\""):gsub("\r\n", "\n"):gsub("\n", "\\n")
+	http.write(string.format('{"status":"ok","log":"%s"}', safe_log))
 end
 
 function action_check_update()
@@ -40,5 +53,6 @@ function action_do_update()
 		http.write('{"status":"error","message":"' .. (res or "升级失败"):gsub("\n", " ") .. '"}')
 	end
 end
+
 
 
