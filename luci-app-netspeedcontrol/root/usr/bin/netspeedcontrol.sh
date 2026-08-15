@@ -211,10 +211,13 @@ is_time_match() {
 	e_val="$(echo "$stop" | tr -d ':')"
 	n_val="$(echo "$now" | tr -d ':')"
 
-	# 去掉前导零，进行安全整数比较
-	s_val=$((10#$s_val))
-	e_val=$((10#$e_val))
-	n_val=$((10#$n_val))
+	# 兼容 BusyBox ash 去掉前导零，进行安全整数比较
+	s_val="$(echo "$s_val" | sed 's/^0*//')"
+	e_val="$(echo "$e_val" | sed 's/^0*//')"
+	n_val="$(echo "$n_val" | sed 's/^0*//')"
+	s_val="${s_val:-0}"
+	e_val="${e_val:-0}"
+	n_val="${n_val:-0}"
 
 	if [ "$s_val" -lt "$e_val" ]; then
 		[ "$n_val" -ge "$s_val" ] && [ "$n_val" -lt "$e_val" ] && return 0
