@@ -22,6 +22,9 @@ local online_devices = nsc.load_online_devices()
 .nsc-form-label { display:block; font-size:12px; font-weight:bold; color:#2d3748; margin-bottom:4px; }
 .nsc-form-control { width:100% !important; max-width:100% !important; padding:7px 10px; border:1px solid #cbd5e0; border-radius:4px; font-size:13px; color:#1a202c; background:#ffffff; margin:0 !important; }
 .nsc-form-control::placeholder { color:#718096 !important; opacity:1 !important; }
+.nsc-weekday-group { display:flex !important; flex-wrap:wrap !important; gap:12px !important; align-items:center !important; margin-bottom:6px !important; background:#f7fafc !important; padding:8px 12px !important; border-radius:4px !important; border:1px solid #e2e8f0 !important; }
+.nsc-weekday-item { display:inline-flex !important; align-items:center !important; font-size:12px !important; color:#2d3748 !important; cursor:pointer !important; user-select:none !important; line-height:1 !important; }
+.nsc-weekday-item input[type="checkbox"] { margin:0 4px 0 0 !important; vertical-align:middle !important; cursor:pointer !important; }
 .nsc-btn-group { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:12px; border-top:1px solid #e2e8f0; }
 .nsc-preset-btn { padding:4px 8px; font-size:11px; margin-right:6px; border-radius:4px; border:1px solid #cbd5e0; background:#f7fafc; cursor:pointer; color:#2d3748; }
 .nsc-preset-btn:hover { background:#edf2f7; border-color:#cbd5e0; }
@@ -110,14 +113,14 @@ local online_devices = nsc.load_online_devices()
 
 		<div class="nsc-form-group">
 			<label class="nsc-form-label"><%:生效星期 (默认全选)%></label>
-			<div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:6px; background:#f7fafc; padding:6px 10px; border-radius:4px; border:1px solid #e2e8f0;">
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="1" checked> <%:周一%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="2" checked> <%:周二%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="3" checked> <%:周三%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="4" checked> <%:周四%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="5" checked> <%:周五%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="6" checked> <%:周六%></label>
-				<label style="font-size:12px; color:#2d3748; cursor:pointer;"><input type="checkbox" class="nsc-modal-weekday" value="7" checked> <%:周日%></label>
+			<div class="nsc-weekday-group">
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="1" checked> <%:周一%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="2" checked> <%:周二%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="3" checked> <%:周三%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="4" checked> <%:周四%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="5" checked> <%:周五%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="6" checked> <%:周六%></label>
+				<label class="nsc-weekday-item"><input type="checkbox" class="nsc-modal-weekday" value="7" checked> <%:周日%></label>
 			</div>
 			<div>
 				<button type="button" class="nsc-preset-btn" onclick="selectModalWeekdays('all')"><%:全选 (一至日)%></button>
