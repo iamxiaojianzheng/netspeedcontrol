@@ -200,6 +200,13 @@ o = s:option(Value, "up_kbit", translate("上传限速"))
 o.placeholder = "256k"
 o:depends("mode", "limit")
 
+function o.cfgvalue(self, section)
+	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
+	if mode ~= "limit" then return "" end
+	local val = uci:get("netspeedcontrol", section, "up_kbit")
+	return nsc.format_rate_display(val)
+end
+
 function o.validate(self, value, section)
 	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then
 		return value
@@ -215,6 +222,13 @@ end
 o = s:option(Value, "down_kbit", translate("下载限速"))
 o.placeholder = "1024k"
 o:depends("mode", "limit")
+
+function o.cfgvalue(self, section)
+	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
+	if mode ~= "limit" then return "" end
+	local val = uci:get("netspeedcontrol", section, "down_kbit")
+	return nsc.format_rate_display(val)
+end
 
 function o.validate(self, value, section)
 	if section and self.map:formvalue("cbi.del." .. self.config .. "." .. section) then

@@ -25,6 +25,21 @@ function M.parse_rate_value(val)
 	return math.floor(num)
 end
 
+function M.format_rate_display(val)
+	if not val or val == "" then return "" end
+	local num = tonumber(val)
+	if not num then
+		return val
+	end
+	if num <= 0 then return "" end
+
+	if num >= 1024 and (num % 1024 == 0) then
+		return string.format("%dM", num / 1024)
+	else
+		return string.format("%dk", num)
+	end
+end
+
 function M.add_device(devices, seen, mac, ip, name)
 	mac = M.normalize_mac(mac)
 	if mac == "" then return end
