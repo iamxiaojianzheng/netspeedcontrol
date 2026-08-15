@@ -421,7 +421,9 @@ append_limit_rule() {
 	if [ -n "$mac" ]; then
 		norm_mac="$(normalize_mac "$mac")"
 		if [ -n "$up_rate" ]; then
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ether saddr "$norm_mac" limit rate over "$up_rate" counter drop 2>/dev/null || true
 			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ether saddr "$norm_mac" limit rate over "$up_rate" counter drop 2>/dev/null || true
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ether saddr "$norm_mac" limit rate over "$up_rate" counter drop 2>/dev/null || true
 		fi
 	fi
 
@@ -435,7 +437,9 @@ append_limit_rule() {
 			fi
 		else
 			if [ -n "$up_rate" ]; then
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip saddr "$ip" limit rate over "$up_rate" counter drop 2>/dev/null || true
 				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip saddr "$ip" limit rate over "$up_rate" counter drop 2>/dev/null || true
+				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip saddr "$ip" limit rate over "$up_rate" counter drop 2>/dev/null || true
 			fi
 			if [ -n "$down_rate" ]; then
 				"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip daddr "$ip" limit rate over "$down_rate" counter drop 2>/dev/null || true
@@ -454,19 +458,19 @@ append_limit_rule6() {
 
 	if [ -n "$set_v6" ]; then
 		if [ -n "$up_rate" ]; then
-			# 上传：设备 -> 应用服务器
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "$ip6" ip6 daddr "@$set_v6" limit rate over "$up_rate" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "$ip6" ip6 daddr "@$set_v6" limit rate over "$up_rate" counter drop 2>/dev/null || true
 		fi
 		if [ -n "$down_rate" ]; then
-			# 下载：应用服务器 -> 设备
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "@$set_v6" ip6 daddr "$ip6" limit rate over "$down_rate" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "@$set_v6" ip6 daddr "$ip6" limit rate over "$down_rate" counter drop 2>/dev/null || true
 		fi
 	else
 		if [ -n "$up_rate" ]; then
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "$ip6" limit rate over "$up_rate" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_PREROUTING_NAME" ip6 saddr "$ip6" limit rate over "$up_rate" counter drop 2>/dev/null || true
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 saddr "$ip6" limit rate over "$up_rate" counter drop 2>/dev/null || true
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_INPUT_NAME" ip6 saddr "$ip6" limit rate over "$up_rate" counter drop 2>/dev/null || true
 		fi
 		if [ -n "$down_rate" ]; then
-			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 daddr "$ip6" limit rate over "$down_rate" counter drop
+			"$NFT_BIN" add rule "$TABLE_FAMILY" "$TABLE_NAME" "$CHAIN_NAME" ip6 daddr "$ip6" limit rate over "$down_rate" counter drop 2>/dev/null || true
 		fi
 	fi
 }
