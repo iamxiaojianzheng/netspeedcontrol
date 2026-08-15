@@ -701,9 +701,9 @@ check_update() {
 	local json tag_name download_url
 
 	if command -v curl >/dev/null 2>&1; then
-		json="$(curl -sL --connect-timeout 8 "${proxy}${api_url}" 2>/dev/null || true)"
+		json="$(curl -sL --connect-timeout 8 "$api_url" 2>/dev/null || true)"
 	elif command -v wget >/dev/null 2>&1; then
-		json="$(wget -qO- --timeout=8 "${proxy}${api_url}" 2>/dev/null || true)"
+		json="$(wget -qO- --timeout=8 "$api_url" 2>/dev/null || true)"
 	fi
 
 	tag_name="$(echo "$json" | awk -F'"' '/"tag_name":/ {print $4}' | head -n1)"
@@ -713,7 +713,7 @@ check_update() {
 		[ -n "$proxy" ] && download_url="${proxy}${download_url}"
 		printf '{"status":"ok","tag_name":"%s","download_url":"%s"}\n' "$tag_name" "$download_url"
 	else
-		printf '{"status":"error","message":"无法连接 GitHub API 获取更新信息，若在大陆网络环境请设置 GitHub 加速代理"}\n'
+		printf '{"status":"error","message":"无法连接 GitHub API 获取更新信息"}\n'
 	fi
 }
 
@@ -726,7 +726,7 @@ do_update() {
 		local repo="iamxiaojianzheng/netspeedcontrol"
 		local api_url="https://api.github.com/repos/${repo}/releases/latest"
 		if command -v curl >/dev/null 2>&1; then
-			download_url="$(curl -sL --connect-timeout 8 "${proxy}${api_url}" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
+			download_url="$(curl -sL --connect-timeout 8 "$api_url" | grep "browser_download_url.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)"
 		fi
 		if [ -n "$download_url" ] && [ -n "$proxy" ]; then
 			download_url="${proxy}${download_url}"
@@ -746,9 +746,10 @@ do_update() {
 		wget -qO "$tmp_ipk" "$download_url"
 	fi
 
-	if [ ! -s "$tmp_ipk" ]; then
-		log "更新失败：下载的 IPK 文件为空"
-		echo "ERROR: Downloaded IPK file is empty"
+	if [ ! -s "$tmp_ipk" ] || grep -qi "<html" "$tmp_ipk" 2>/dev/null; then
+		rm -f "$tmp_ipk"
+		log "更新失败：下载的 IPK 文件无效（可能是代理拦截或 404 网页）"
+		echo "ERROR: Downloaded file is invalid (HTML response or empty)"
 		return 1
 	fi
 

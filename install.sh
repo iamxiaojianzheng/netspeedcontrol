@@ -28,32 +28,38 @@ if [ -n "$PROXY" ]; then
     echo "使用 GitHub 加速代理: $PROXY"
 fi
 
-echo "正在从 GitHub Release 获取最新版本..."
-RELEASE_API="${PROXY}https://api.github.com/repos/${REPO}/releases/latest"
+echo "正在从 GitHub Release 获取最新版本信息..."
+RELEASE_API="https://api.github.com/repos/${REPO}/releases/latest"
 
-DOWNLOAD_URL=""
+RAW_DOWNLOAD_URL=""
 if command -v curl >/dev/null 2>&1; then
-    DOWNLOAD_URL=$(curl -sL "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    RAW_DOWNLOAD_URL=$(curl -sL --connect-timeout 8 "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
 else
-    DOWNLOAD_URL=$(wget -qO- "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    RAW_DOWNLOAD_URL=$(wget -qO- --timeout=8 "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
 fi
 
-if [ -n "$DOWNLOAD_URL" ] && [ -n "$PROXY" ]; then
-    DOWNLOAD_URL="${PROXY}${DOWNLOAD_URL}"
-fi
-
-if [ -z "$DOWNLOAD_URL" ]; then
-    echo "未能从 GitHub Releases 找不到 IPK 下载地址，尝试使用直链..."
-    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/latest/download/luci-app-netspeedcontrol_0.2.0-1_all.ipk"
+if [ -n "$RAW_DOWNLOAD_URL" ]; then
+    DOWNLOAD_URL="${PROXY}${RAW_DOWNLOAD_URL}"
+else
+    echo "警告: 无法获取最新 Release 下载地址，尝试使用直链..."
+    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/download/v0.2.0-1/luci-app-netspeedcontrol_0.2.0-1_all.ipk"
 fi
 
 IPK_FILE="${TMP_DIR}/luci-app-netspeedcontrol.ipk"
 
-echo "下载安装包: $DOWNLOAD_URL"
+echo "正在下载安装包: $DOWNLOAD_URL"
 if command -v curl >/dev/null 2>&1; then
     curl -sL "$DOWNLOAD_URL" -o "$IPK_FILE"
 else
     wget -qO "$IPK_FILE" "$DOWNLOAD_URL"
+fi
+
+# 检验下载文件是否有效（非 HTML 报错页面且非空）
+if [ ! -s "$IPK_FILE" ] || grep -qi "<html" "$IPK_FILE" 2>/dev/null; then
+    echo "错误: 下载安装包失败！下载的文件为错误页面或为空。" >&2
+    echo "提示: 请检查当前加速代理是否可用，或去掉 GITHUB_PROXY 环境变量后重试。" >&2
+    rm -rf "$TMP_DIR"
+    exit 1
 fi
 
 echo "正在安装 luci-app-netspeedcontrol..."
