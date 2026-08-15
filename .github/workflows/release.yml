@@ -123,36 +123,9 @@ jobs:
             dist/sha256sums
           name: Release ${{ steps.version.outputs.tag_name }}
           body: |
-            ## 🚀 OpenWrt/ImmortalWrt 设备上网控制插件 (luci-app-netspeedcontrol)
+            ## 本次更新内容
 
-            ### 📝 本次更新内容
-            ```text
             ${{ steps.commit.outputs.msg }}
-            ```
-
-            ### 📦 安装说明
-
-            在 OpenWrt 终端（SSH）中运行以下一键命令自动安装：
-
-            ```sh
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh)"
-            ```
-
-            或者手动下载 `.ipk` 上传至 `/tmp` 目录后执行：
-
-            ```sh
-            opkg update
-            opkg install /tmp/luci-app-netspeedcontrol*.ipk
-            ```
-
-            如果网页菜单未即时显示，请尝试重启 LuCI 服务：
-
-            ```sh
-            /etc/init.d/uhttpd restart # 或 /etc/init.d/nginx restart
-            ```
-
-            ### 🔒 SHA256 校验和
-            请参考随 release 发布的 `sha256sums` 文件校验安装包完整性。
           draft: false
           prerelease: false
           generate_release_notes: true
