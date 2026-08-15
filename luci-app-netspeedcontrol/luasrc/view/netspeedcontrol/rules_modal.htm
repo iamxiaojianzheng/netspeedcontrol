@@ -153,8 +153,7 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 
 		<div class="nsc-btn-group">
 			<button type="button" class="cbi-button cbi-button-reset" onclick="closeAddRuleModal()"><%:取消%></button>
-			<button type="button" class="cbi-button cbi-button-add" onclick="submitModalAddRule(false)"><%:确定添加 (暂存)%></button>
-			<button type="button" class="cbi-button cbi-button-save" onclick="submitModalAddRule(true)"><%:确定并立即应用%></button>
+			<button type="button" class="cbi-button cbi-button-save" onclick="submitModalAddRule()"><%:保存%></button>
 		</div>
 	</div>
 </div>
@@ -326,7 +325,7 @@ select:disabled, input:disabled { background-color: #edf2f7 !important; cursor: 
 		else if (type === 'allday') { startInput.value = "00:00"; stopInput.value = "23:59"; }
 	}
 
-	function submitModalAddRule(autoCommit) {
+	function submitModalAddRule() {
 		var macSel = document.getElementById("modal_rule_mac").value;
 		var customMac = document.getElementById("modal_custom_mac").value;
 		var finalMac = (macSel === "CUSTOM" || !macSel) ? customMac : macSel;
