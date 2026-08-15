@@ -150,8 +150,9 @@ local online_devices = nsc.load_online_devices()
 		</div>
 
 		<div class="nsc-btn-group">
-			<button type="button" class="cbi-button cbi-button-reset" onclick="closeAddRuleModal()">[ <%:取消%> ]</button>
-			<button type="button" class="cbi-button cbi-button-save" onclick="submitModalAddRule()">[ <%:确定添加规则%> ]</button>
+			<button type="button" class="cbi-button cbi-button-reset" onclick="closeAddRuleModal()"><%:取消%> </button>
+			<button type="button" class="cbi-button cbi-button-add" onclick="submitModalAddRule(false)"><%:确定添加 (暂存)%></button>
+			<button type="button" class="cbi-button cbi-button-save" onclick="submitModalAddRule(true)"><%:确定并立即应用%></button>
 		</div>
 	</div>
 </div>
@@ -207,7 +208,7 @@ local online_devices = nsc.load_online_devices()
 		else if (type === 'allday') { startInput.value = "00:00"; stopInput.value = "23:59"; }
 	}
 
-	function submitModalAddRule() {
+	function submitModalAddRule(autoCommit) {
 		var macSel = document.getElementById("modal_rule_mac").value;
 		var customMac = document.getElementById("modal_custom_mac").value;
 		var finalMac = (macSel === "CUSTOM" || !macSel) ? customMac : macSel;
@@ -235,7 +236,8 @@ local online_devices = nsc.load_online_devices()
 			start_time: document.getElementById("modal_rule_start").value || "21:00",
 			stop_time: document.getElementById("modal_rule_stop").value || "07:00",
 			up_kbit: document.getElementById("modal_rule_up").value || "",
-			down_kbit: document.getElementById("modal_rule_down").value || ""
+			down_kbit: document.getElementById("modal_rule_down").value || "",
+			commit: autoCommit ? "1" : "0"
 		};
 
 		var formData = new FormData();

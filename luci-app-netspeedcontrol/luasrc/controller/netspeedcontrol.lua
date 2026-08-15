@@ -15,7 +15,16 @@ function index()
 	entry({"admin", "network", "netspeedcontrol", "check_update"}, call("action_check_update")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "do_update"}, call("action_do_update")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "get_log"}, call("action_get_log")).leaf = true
+	entry({"admin", "network", "netspeedcontrol", "clear_log"}, call("action_clear_log")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "add_rule"}, call("action_add_rule")).leaf = true
+end
+
+function action_clear_log()
+	local sys = require "luci.sys"
+	local http = require "luci.http"
+	sys.exec("/usr/bin/netspeedcontrol.sh clear_log >/dev/null 2>&1")
+	http.prepare_content("application/json")
+	http.write('{"status":"ok"}')
 end
 
 function action_add_rule()
@@ -59,8 +68,14 @@ function action_add_rule()
 	})
 
 	if section_id then
-		uci:commit("netspeedcontrol")
-		sys.call("/etc/init.d/netspeedcontrol reload >/dev/null 2>&1 || /usr/bin/netspeedcontrol.sh apply >/dev/null 2>&1")
+		local auto_commit = http.formvalue("commit")
+		if auto_commit == "1" then
+			uci:commit("netspeedcontrol")
+			sys.call("rm -rf /tmp/.uci/netspeedcontrol* 2>/dev/null")
+			sys.call("/etc/init.d/netspeedcontrol reload >/dev/null 2>&1 || /usr/bin/netspeedcontrol.sh apply >/dev/null 2>&1")
+		else
+			uci:save("netspeedcontrol")
+		end
 		http.write('{"status":"ok"}')
 	else
 		http.write('{"status":"error","message":"写入 UCI 配置失败！"}')
