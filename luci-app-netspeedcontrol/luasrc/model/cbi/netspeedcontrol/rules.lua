@@ -137,15 +137,16 @@ o_modal.cfgvalue = function()
 	local html = {}
 	table.insert(html, "<style>")
 	table.insert(html, ".nsc-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center; }")
-	table.insert(html, ".nsc-modal-dialog { background:#ffffff; border-radius:8px; width:520px; max-width:92%; padding:20px 24px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; }")
+	table.insert(html, ".nsc-modal-dialog { background:#ffffff; border-radius:8px; width:540px; max-width:92%; padding:20px 24px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; box-sizing:border-box; }")
 	table.insert(html, ".nsc-modal-title { font-size:16px; font-weight:bold; color:#2d3748; padding-bottom:12px; border-bottom:1px solid #e2e8f0; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }")
 	table.insert(html, ".nsc-modal-close { font-size:18px; cursor:pointer; color:#a0aec0; }")
 	table.insert(html, ".nsc-modal-close:hover { color:#e53e3e; }")
 	table.insert(html, ".nsc-form-group { margin-bottom:12px; }")
-	table.insert(html, ".nsc-form-label { display:block; font-size:12px; font-weight:bold; color:#4a5568; margin-bottom:4px; }")
-	table.insert(html, ".nsc-form-control { width:100%; padding:6px 10px; border:1px solid #cbd5e0; border-radius:4px; box-sizing:border-box; font-size:13px; }")
+	table.insert(html, ".nsc-form-label { display:block; font-size:12px; font-weight:bold; color:#2d3748; margin-bottom:4px; }")
+	table.insert(html, ".nsc-form-control { width:100%; padding:7px 10px; border:1px solid #cbd5e0; border-radius:4px; box-sizing:border-box; font-size:13px; color:#1a202c; background:#ffffff; }")
+	table.insert(html, ".nsc-form-control::placeholder { color:#718096 !important; opacity:1 !important; }")
 	table.insert(html, ".nsc-btn-group { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; padding-top:12px; border-top:1px solid #e2e8f0; }")
-	table.insert(html, ".nsc-preset-btn { padding:3px 8px; font-size:11px; margin-right:6px; border-radius:4px; border:1px solid #cbd5e0; background:#f7fafc; cursor:pointer; }")
+	table.insert(html, ".nsc-preset-btn { padding:4px 8px; font-size:11px; margin-right:6px; border-radius:4px; border:1px solid #cbd5e0; background:#f7fafc; cursor:pointer; color:#2d3748; }")
 	table.insert(html, ".nsc-preset-btn:hover { background:#edf2f7; border-color:#cbd5e0; }")
 	table.insert(html, "</style>")
 
@@ -191,7 +192,7 @@ o_modal.cfgvalue = function()
 			<div class="nsc-form-group" style="display:flex; gap:12px;">
 				<div style="flex:1;">
 					<label class="nsc-form-label">控制方式</label>
-					<select id="modal_rule_mode" class="nsc-form-control">
+					<select id="modal_rule_mode" class="nsc-form-control" onchange="toggleModalLimitOptions(this)">
 						<option value="block" selected>设定时间内断网</option>
 						<option value="limit">设定时间内限速</option>
 					</select>
@@ -203,6 +204,20 @@ o_modal.cfgvalue = function()
 						<option value="app">指定应用分类</option>
 						<option value="custom_domain">自定义域名</option>
 					</select>
+				</div>
+			</div>
+
+			<!-- 限速配置项：当控制方式为“设定时间内限速”时展开 -->
+			<div class="nsc-form-group" id="modal_limit_group" style="display:none;">
+				<div style="display:flex; gap:12px;">
+					<div style="flex:1;">
+						<label class="nsc-form-label">上传限速 (如 256k 或 1M)</label>
+						<input type="text" id="modal_rule_up" class="nsc-form-control" placeholder="例如：256k 或 1M">
+					</div>
+					<div style="flex:1;">
+						<label class="nsc-form-label">下载限速 (如 1024k 或 2M)</label>
+						<input type="text" id="modal_rule_down" class="nsc-form-control" placeholder="例如：1024k 或 2M">
+					</div>
 				</div>
 			</div>
 
@@ -218,7 +233,7 @@ o_modal.cfgvalue = function()
 
 			<div class="nsc-form-group" id="modal_custom_domain_group" style="display:none;">
 				<label class="nsc-form-label">自定义域名</label>
-				<input type="text" id="modal_rule_domains" class="nsc-form-control" placeholder="baidu.com tieba.baidu.com">
+				<input type="text" id="modal_rule_domains" class="nsc-form-control" placeholder="例如：baidu.com tieba.baidu.com">
 			</div>
 
 			<div class="nsc-form-group">
@@ -264,6 +279,11 @@ o_modal.cfgvalue = function()
 			if (group) group.style.display = (sel.value === "CUSTOM") ? "block" : "none";
 		}
 
+		function toggleModalLimitOptions(sel) {
+			var limitGroup = document.getElementById("modal_limit_group");
+			if (limitGroup) limitGroup.style.display = (sel.value === "limit") ? "block" : "none";
+		}
+
 		function toggleModalScopeOptions(sel) {
 			var appGroup = document.getElementById("modal_app_cat_group");
 			var domainGroup = document.getElementById("modal_custom_domain_group");
@@ -298,6 +318,8 @@ o_modal.cfgvalue = function()
 			sessionStorage.setItem("nsc_modal_domains", document.getElementById("modal_rule_domains").value || "");
 			sessionStorage.setItem("nsc_modal_start", document.getElementById("modal_rule_start").value || "21:00");
 			sessionStorage.setItem("nsc_modal_stop", document.getElementById("modal_rule_stop").value || "07:00");
+			sessionStorage.setItem("nsc_modal_up", document.getElementById("modal_rule_up").value || "");
+			sessionStorage.setItem("nsc_modal_down", document.getElementById("modal_rule_down").value || "");
 
 			// 触发 CBI 原生的 Add 按钮添加一行
 			var addBtn = document.querySelector("input.cbi-button-add[name='cbi.cts.netspeedcontrol.rule']");
@@ -336,6 +358,36 @@ o_modal.cfgvalue = function()
 				if (nameInputs && nameInputs.length > 0) {
 					nameInputs[nameInputs.length - 1].value = sessionStorage.getItem("nsc_modal_name") || "KidPhone";
 					sessionStorage.removeItem("nsc_modal_name");
+				}
+
+				var modeSelects = document.querySelectorAll("select[id^='cbid.netspeedcontrol.'][id$='.mode']");
+				if (modeSelects && modeSelects.length > 0) {
+					modeSelects[modeSelects.length - 1].value = sessionStorage.getItem("nsc_modal_mode") || "block";
+					sessionStorage.removeItem("nsc_modal_mode");
+				}
+
+				var scopeSelects = document.querySelectorAll("select[id^='cbid.netspeedcontrol.'][id$='.target_scope']");
+				if (scopeSelects && scopeSelects.length > 0) {
+					scopeSelects[scopeSelects.length - 1].value = sessionStorage.getItem("nsc_modal_scope") || "all";
+					sessionStorage.removeItem("nsc_modal_scope");
+				}
+
+				var domainInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.custom_domains']");
+				if (domainInputs && domainInputs.length > 0) {
+					domainInputs[domainInputs.length - 1].value = sessionStorage.getItem("nsc_modal_domains") || "";
+					sessionStorage.removeItem("nsc_modal_domains");
+				}
+
+				var upInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.up_kbit']");
+				if (upInputs && upInputs.length > 0) {
+					upInputs[upInputs.length - 1].value = sessionStorage.getItem("nsc_modal_up") || "";
+					sessionStorage.removeItem("nsc_modal_up");
+				}
+
+				var downInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.down_kbit']");
+				if (downInputs && downInputs.length > 0) {
+					downInputs[downInputs.length - 1].value = sessionStorage.getItem("nsc_modal_down") || "";
+					sessionStorage.removeItem("nsc_modal_down");
 				}
 
 				var startInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.start_time']");
@@ -441,7 +493,7 @@ o.default = "short_video"
 o:depends("target_scope", "app")
 
 o = s:option(Value, "custom_domains", translate("自定义域名"))
-o.placeholder = "baidu.com"
+o.placeholder = "例如: baidu.com tieba.baidu.com"
 o:depends("target_scope", "custom_domain")
 
 o = s:option(Value, "weekdays", translate("生效星期"))
