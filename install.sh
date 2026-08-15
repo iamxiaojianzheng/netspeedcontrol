@@ -42,7 +42,7 @@ if [ -n "$RAW_DOWNLOAD_URL" ]; then
     DOWNLOAD_URL="${PROXY}${RAW_DOWNLOAD_URL}"
 else
     echo "警告: 无法获取最新 Release 下载地址，尝试使用直链..."
-    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/download/v0.2.3-15/luci-app-netspeedcontrol_0.2.3-15_all.ipk"
+    DOWNLOAD_URL="${PROXY}https://github.com/iamxiaojianzheng/netspeedcontrol/releases/download/v0.2.3-16/luci-app-netspeedcontrol_0.2.3-16_all.ipk"
 fi
 
 IPK_FILE="${TMP_DIR}/luci-app-netspeedcontrol.ipk"

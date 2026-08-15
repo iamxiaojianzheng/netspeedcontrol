@@ -15,7 +15,6 @@ local m, s, o
 
 m = Map("netspeedcontrol", translate("设备上网控制 - 规则管理"))
 m.description = translate("管理受控设备的上网规则。可通过表格下方“添加”按钮唤起弹窗添加或修改规则。")
-m.apply_on_parse = true
 
 function m.on_after_commit(self)
 	nsc.apply_now()
