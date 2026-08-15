@@ -1,6 +1,8 @@
 local sys = require "luci.sys"
 local uci = require("luci.model.uci").cursor()
 local util = require "luci.util"
+local TypedSection = TypedSection or luci.cbi.TypedSection
+local TableSection = TableSection or TypedSection
 local m, s, o
 local online_devices
 
@@ -355,8 +357,8 @@ o_modal.cfgvalue = function()
 	return table.concat(html, "\n")
 end
 
--- 主表格 TableSection 列表展示
-s = m:section(TableSection, "rule", translate("已配置规则"))
+-- 主表格 Section 列表展示
+s = m:section(TypedSection, "rule", translate("已配置规则"))
 s.addremove = true
 s.anonymous = true
 s.template = "cbi/tblsection"
