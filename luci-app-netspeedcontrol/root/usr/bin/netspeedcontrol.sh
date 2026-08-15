@@ -490,14 +490,10 @@ handle_rule() {
 		resolved_ip="$(resolve_ipv4_from_mac "$mac" || true)"
 		[ -n "$resolved_ip" ] || resolved_ip="$ip"
 		ip6_list="$(resolve_ipv6_from_mac "$mac" || true)"
-		if [ -z "$resolved_ip" ] && [ -z "$ip6_list" ]; then
-			log "skip rule [$name]: unable to resolve IP address from MAC $mac"
-			return 0
-		fi
 	elif [ -n "$ip" ]; then
 		resolved_ip="$ip"
 	else
-		log "skip rule [$name]: missing MAC address"
+		log "skip rule [$name]: missing MAC address or IP"
 		return 0
 	fi
 
@@ -517,9 +513,13 @@ handle_rule() {
 		rm -f "$STATE_DIR/$section.ip6" 2>/dev/null || true
 	fi
 
+	if [ -n "$mac" ]; then
+		printf '%s\n' "$(normalize_mac "$mac")" > "$STATE_DIR/$section.mac"
+		has_any=1
+	fi
+
 	[ "$has_any" -eq 1 ] || return 0
 	printf '%s\n' "$name" > "$STATE_DIR/$section.name"
-	printf '%s\n' "$(normalize_mac "$mac")" > "$STATE_DIR/$section.mac"
 	printf '%s\n' "$mode" > "$STATE_DIR/$section.mode"
 
 	set_v4=""
