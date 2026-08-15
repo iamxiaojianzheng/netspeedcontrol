@@ -34,11 +34,6 @@ input[id$='._custom_mac'] { min-width: 170px !important; width: 170px !important
 input[id$='.custom_domains'] { min-width: 180px !important; }
 </style>
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-	<span style="font-weight:bold; color:#4a5568;"><%:控制规则列表%></span>
-	<button type="button" class="cbi-button cbi-button-add" style="padding:6px 14px; font-weight:bold;" onclick="openAddRuleModal()">[ + <%:新增控制规则%> ]</button>
-</div>
-
 <!-- NSC Modal 模态弹窗 -->
 <div id="nscModalOverlay" class="nsc-modal-overlay">
 	<div class="nsc-modal-dialog">
@@ -273,4 +268,26 @@ input[id$='.custom_domains'] { min-width: 180px !important; }
 		};
 		xhr.send(formData);
 	}
+
+	window.addEventListener("DOMContentLoaded", function() {
+		var bindCbiAddButton = function() {
+			var btns = document.querySelectorAll("input[name^='cbi.cts.'], button[name^='cbi.cts.'], input.cbi-button-add, button.cbi-button-add");
+			for (var i = 0; i < btns.length; i++) {
+				var btn = btns[i];
+				if (btn.name && btn.name.indexOf("cbi.cts.") !== -1) {
+					btn.type = "button";
+					btn.onclick = function(ev) {
+						if (ev) {
+							ev.preventDefault();
+							ev.stopPropagation();
+						}
+						openAddRuleModal();
+						return false;
+					};
+				}
+			}
+		};
+		bindCbiAddButton();
+		setTimeout(bindCbiAddButton, 300);
+	});
 </script>
