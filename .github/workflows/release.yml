@@ -65,11 +65,22 @@ jobs:
   release:
     name: Create GitHub Release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
+
+      - name: Extract Version Info
+        id: version
+        run: |
+          VERSION=$(grep -E '^PKG_VERSION:=' luci-app-netspeedcontrol/Makefile | cut -d'=' -f2 | tr -d ' ')
+          RELEASE=$(grep -E '^PKG_RELEASE:=' luci-app-netspeedcontrol/Makefile | cut -d'=' -f2 | tr -d ' ')
+          TAG_NAME="v${VERSION}-${RELEASE}"
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG_NAME="${{ github.ref_name }}"
+          fi
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
@@ -80,16 +91,23 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.version.outputs.tag_name }}
           files: |
             dist/*.ipk
             dist/sha256sums
-          name: Release ${{ github.ref_name }}
+          name: Release ${{ steps.version.outputs.tag_name }}
           body: |
             ## 🚀 OpenWrt/ImmortalWrt 设备上网控制插件 (luci-app-netspeedcontrol)
 
             ### 📦 安装说明
 
-            将上传的 `.ipk` 文件上传至路由器的 `/tmp` 目录，然后执行：
+            在 OpenWrt 终端（SSH）中运行以下一键命令自动安装：
+
+            ```sh
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/install.sh)"
+            ```
+
+            或者手动下载 `.ipk` 上传至 `/tmp` 目录后执行：
 
             ```sh
             opkg update
@@ -108,3 +126,4 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
