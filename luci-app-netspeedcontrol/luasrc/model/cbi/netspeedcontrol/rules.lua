@@ -506,31 +506,43 @@ o.default = "1 2 3 4 5 6 7"
 o = s:option(Value, "start_time", translate("开始时间"))
 o.placeholder = "21:00"
 o.default = "21:00"
-o.rmempty = false
+o.rmempty = true
+
+function o.cfgvalue(self, section)
+	local v = uci:get("netspeedcontrol", section, "start_time")
+	return (v and v ~= "") and v or "21:00"
+end
 
 function o.validate(self, value)
-	if not value or value == "" then
+	local v = (value or ""):gsub("^%s*(.-)%s*$", "%1")
+	if v == "" then
 		return "21:00"
 	end
-	if not value:match("^([01]%d|2[0-3]):[0-5]%d$") then
+	if not v:match("^([01]%d|2[0-3]):[0-5]%d$") then
 		return nil, translate("开始时间格式错误，请输入标准的 24 小时制时间，例如 21:00！")
 	end
-	return value
+	return v
 end
 
 o = s:option(Value, "stop_time", translate("结束时间"))
 o.placeholder = "07:00"
 o.default = "07:00"
-o.rmempty = false
+o.rmempty = true
+
+function o.cfgvalue(self, section)
+	local v = uci:get("netspeedcontrol", section, "stop_time")
+	return (v and v ~= "") and v or "07:00"
+end
 
 function o.validate(self, value)
-	if not value or value == "" then
+	local v = (value or ""):gsub("^%s*(.-)%s*$", "%1")
+	if v == "" then
 		return "07:00"
 	end
-	if not value:match("^([01]%d|2[0-3]):[0-5]%d$") then
+	if not v:match("^([01]%d|2[0-3]):[0-5]%d$") then
 		return nil, translate("结束时间格式错误，请输入标准的 24 小时制时间，例如 07:00！")
 	end
-	return value
+	return v
 end
 
 o = s:option(Value, "up_kbit", translate("上传限速"))
