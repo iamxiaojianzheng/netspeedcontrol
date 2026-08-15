@@ -79,6 +79,7 @@ end
 o = s:option(Value, "_custom_mac", translate("手动 MAC"))
 o.datatype = "macaddr"
 o.placeholder = "AA:BB:CC:DD:EE:FF"
+o.size = 18
 o:depends("mac", "CUSTOM")
 
 function o.cfgvalue(self, section)
@@ -110,9 +111,26 @@ o:value("social", translate("社交聊天"))
 o.default = "short_video"
 o:depends("target_scope", "app")
 
+function o.cfgvalue(self, section)
+	local scope = uci:get("netspeedcontrol", section, "target_scope") or "all"
+	if scope ~= "app" then
+		return ""
+	end
+	return uci:get("netspeedcontrol", section, "app_category") or "short_video"
+end
+
 o = s:option(Value, "custom_domains", translate("自定义域名"))
 o.placeholder = "例如: baidu.com tieba.baidu.com"
+o.size = 20
 o:depends("target_scope", "custom_domain")
+
+function o.cfgvalue(self, section)
+	local scope = uci:get("netspeedcontrol", section, "target_scope") or "all"
+	if scope ~= "custom_domain" then
+		return ""
+	end
+	return uci:get("netspeedcontrol", section, "custom_domains") or ""
+end
 
 o = s:option(Value, "weekdays", translate("生效星期"))
 o.placeholder = "1 2 3 4 5 6 7"
