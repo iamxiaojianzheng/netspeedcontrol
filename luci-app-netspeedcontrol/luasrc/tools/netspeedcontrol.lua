@@ -87,7 +87,7 @@ end
 function M.device_label(device)
 	local name_str = device.name ~= "" and device.name or "未命名设备"
 	local ip_str = device.ip ~= "" and device.ip or "未知 IP"
-	return string.format("%s (%s / %s) [在线]", name_str, ip_str, device.mac)
+	return string.format("%s (%s / %s) 在线", name_str, ip_str, device.mac)
 end
 
 function M.saved_device_label(mac)

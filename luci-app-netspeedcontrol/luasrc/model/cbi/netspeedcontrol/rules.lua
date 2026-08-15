@@ -12,7 +12,7 @@ local online_devices = nsc.load_online_devices()
 local m, s, o
 
 m = Map("netspeedcontrol", translate("设备上网控制 - 规则管理"))
-m.description = translate("通过表格管理已有规则。点击右上角 [ + 新增控制规则 ] 按钮可通过弹窗进行规则添加。")
+m.description = translate("管理受控设备的上网规则。可通过表格下方“添加”按钮唤起弹窗添加或修改规则。")
 m.apply_on_parse = true
 
 function m.on_after_commit(self)
@@ -73,7 +73,7 @@ function o.cfgvalue(self, section)
 	return uci:get("netspeedcontrol", section, "name") or "未命名"
 end
 
--- 受控设备
+-- 4. 受控设备
 o = s:option(DummyValue, "mac", translate("受控设备"))
 function o.cfgvalue(self, section)
 	local mac = nsc.normalize_mac(uci:get("netspeedcontrol", section, "mac") or "")
@@ -86,15 +86,15 @@ function o.cfgvalue(self, section)
 	return nsc.saved_device_label(mac)
 end
 
--- 控制方式
+-- 5. 控制方式
 o = s:option(DummyValue, "mode", translate("控制方式"))
 o.rawhtml = true
 function o.cfgvalue(self, section)
 	local mode = uci:get("netspeedcontrol", section, "mode") or "block"
 	if mode == "block" then
-		return '<span style="color:#e53e3e; font-weight:bold;">[ 定时断网 ]</span>'
+		return '<span style="color:#e53e3e; font-weight:bold;">定时断网</span>'
 	else
-		return '<span style="color:#3182ce; font-weight:bold;">[ 定时限速 ]</span>'
+		return '<span style="color:#3182ce; font-weight:bold;">定时限速</span>'
 	end
 end
 
