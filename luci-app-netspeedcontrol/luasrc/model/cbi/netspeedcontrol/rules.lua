@@ -1,4 +1,6 @@
 local uci = require("luci.model.uci").cursor()
+local util = require("luci.util")
+local pcdata = util.pcdata
 local nsc
 local ok, m = pcall(require, "luci.model.cbi.netspeedcontrol.tools")
 if ok then
