@@ -224,104 +224,47 @@ local online_devices = nsc.load_online_devices()
 		}
 		var finalWeekdays = selectedDays.join(" ");
 
-		sessionStorage.setItem("nsc_modal_mac", finalMac);
-		sessionStorage.setItem("nsc_modal_name", document.getElementById("modal_rule_name").value || "KidPhone");
-		sessionStorage.setItem("nsc_modal_mode", document.getElementById("modal_rule_mode").value || "block");
-		sessionStorage.setItem("nsc_modal_scope", document.getElementById("modal_rule_scope").value || "all");
-		sessionStorage.setItem("nsc_modal_app", document.getElementById("modal_rule_app_cat").value || "short_video");
-		sessionStorage.setItem("nsc_modal_domains", document.getElementById("modal_rule_domains").value || "");
-		sessionStorage.setItem("nsc_modal_weekdays", finalWeekdays || "1 2 3 4 5 6 7");
-		sessionStorage.setItem("nsc_modal_start", document.getElementById("modal_rule_start").value || "21:00");
-		sessionStorage.setItem("nsc_modal_stop", document.getElementById("modal_rule_stop").value || "07:00");
-		sessionStorage.setItem("nsc_modal_up", document.getElementById("modal_rule_up").value || "");
-		sessionStorage.setItem("nsc_modal_down", document.getElementById("modal_rule_down").value || "");
+		var data = {
+			name: document.getElementById("modal_rule_name").value || "KidPhone",
+			mac: finalMac,
+			mode: document.getElementById("modal_rule_mode").value || "block",
+			target_scope: document.getElementById("modal_rule_scope").value || "all",
+			app_category: document.getElementById("modal_rule_app_cat").value || "short_video",
+			custom_domains: document.getElementById("modal_rule_domains").value || "",
+			weekdays: finalWeekdays || "1 2 3 4 5 6 7",
+			start_time: document.getElementById("modal_rule_start").value || "21:00",
+			stop_time: document.getElementById("modal_rule_stop").value || "07:00",
+			up_kbit: document.getElementById("modal_rule_up").value || "",
+			down_kbit: document.getElementById("modal_rule_down").value || ""
+		};
 
-		// 触发 CBI 原生的 Add 按钮添加一行
-		var addBtn = document.querySelector("input.cbi-button-add[name='cbi.cts.netspeedcontrol.rule']");
-		if (addBtn) {
-			addBtn.click();
-		} else {
-			var altBtn = document.querySelector("input[name^='cbi.cts.netspeedcontrol.rule']");
-			if (altBtn) altBtn.click();
+		var formData = new FormData();
+		for (var k in data) {
+			formData.append(k, data[k]);
 		}
-	}
 
-	// 页面重新渲染后，写入 Modal 暂存的值
-	window.addEventListener("DOMContentLoaded", function() {
-		var pendingMac = sessionStorage.getItem("nsc_modal_mac");
-		if (pendingMac) {
-			sessionStorage.removeItem("nsc_modal_mac");
-			
-			// 定位新建行的表单项并赋值
-			var macSelects = document.querySelectorAll("select[id^='cbid.netspeedcontrol.'][id$='.mac']");
-			if (macSelects && macSelects.length > 0) {
-				var lastMacSelect = macSelects[macSelects.length - 1];
-				var found = false;
-				for (var i = 0; i < lastMacSelect.options.length; i++) {
-					if (lastMacSelect.options[i].value.toUpperCase() === pendingMac.toUpperCase()) {
-						lastMacSelect.selectedIndex = i;
-						found = true;
-						break;
+		var xhr = new XMLHttpRequest();
+		xhr.open("POST", "<%=url('admin/network/netspeedcontrol/add_rule')%>", true);
+		xhr.onload = function() {
+			if (xhr.status === 200) {
+				try {
+					var res = JSON.parse(xhr.responseText);
+					if (res.status === "ok") {
+						closeAddRuleModal();
+						window.location.reload();
+					} else {
+						alert(res.message || "添加规则失败！");
 					}
+				} catch(e) {
+					alert("响应格式解析错误！");
 				}
-				if (!found) {
-					lastMacSelect.value = "CUSTOM";
-				}
+			} else {
+				alert("网络请求失败，状态码: " + xhr.status);
 			}
-
-			var nameInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.name']");
-			if (nameInputs && nameInputs.length > 0) {
-				nameInputs[nameInputs.length - 1].value = sessionStorage.getItem("nsc_modal_name") || "KidPhone";
-				sessionStorage.removeItem("nsc_modal_name");
-			}
-
-			var modeSelects = document.querySelectorAll("select[id^='cbid.netspeedcontrol.'][id$='.mode']");
-			if (modeSelects && modeSelects.length > 0) {
-				modeSelects[modeSelects.length - 1].value = sessionStorage.getItem("nsc_modal_mode") || "block";
-				sessionStorage.removeItem("nsc_modal_mode");
-			}
-
-			var scopeSelects = document.querySelectorAll("select[id^='cbid.netspeedcontrol.'][id$='.target_scope']");
-			if (scopeSelects && scopeSelects.length > 0) {
-				scopeSelects[scopeSelects.length - 1].value = sessionStorage.getItem("nsc_modal_scope") || "all";
-				sessionStorage.removeItem("nsc_modal_scope");
-			}
-
-			var domainInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.custom_domains']");
-			if (domainInputs && domainInputs.length > 0) {
-				domainInputs[domainInputs.length - 1].value = sessionStorage.getItem("nsc_modal_domains") || "";
-				sessionStorage.removeItem("nsc_modal_domains");
-			}
-
-			var weekdayInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.weekdays']");
-			if (weekdayInputs && weekdayInputs.length > 0) {
-				weekdayInputs[weekdayInputs.length - 1].value = sessionStorage.getItem("nsc_modal_weekdays") || "1 2 3 4 5 6 7";
-				sessionStorage.removeItem("nsc_modal_weekdays");
-			}
-
-			var upInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.up_kbit']");
-			if (upInputs && upInputs.length > 0) {
-				upInputs[upInputs.length - 1].value = sessionStorage.getItem("nsc_modal_up") || "";
-				sessionStorage.removeItem("nsc_modal_up");
-			}
-
-			var downInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.down_kbit']");
-			if (downInputs && downInputs.length > 0) {
-				downInputs[downInputs.length - 1].value = sessionStorage.getItem("nsc_modal_down") || "";
-				sessionStorage.removeItem("nsc_modal_down");
-			}
-
-			var startInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.start_time']");
-			if (startInputs && startInputs.length > 0) {
-				startInputs[startInputs.length - 1].value = sessionStorage.getItem("nsc_modal_start") || "21:00";
-				sessionStorage.removeItem("nsc_modal_start");
-			}
-
-			var stopInputs = document.querySelectorAll("input[id^='cbid.netspeedcontrol.'][id$='.stop_time']");
-			if (stopInputs && stopInputs.length > 0) {
-				stopInputs[stopInputs.length - 1].value = sessionStorage.getItem("nsc_modal_stop") || "07:00";
-				sessionStorage.removeItem("nsc_modal_stop");
-			}
-		}
-	});
+		};
+		xhr.onerror = function() {
+			alert("网络连接异常，添加规则失败！");
+		};
+		xhr.send(formData);
+	}
 </script>

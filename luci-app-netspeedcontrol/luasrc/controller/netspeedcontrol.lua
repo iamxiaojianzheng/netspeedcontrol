@@ -15,6 +15,56 @@ function index()
 	entry({"admin", "network", "netspeedcontrol", "check_update"}, call("action_check_update")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "do_update"}, call("action_do_update")).leaf = true
 	entry({"admin", "network", "netspeedcontrol", "get_log"}, call("action_get_log")).leaf = true
+	entry({"admin", "network", "netspeedcontrol", "add_rule"}, call("action_add_rule")).leaf = true
+end
+
+function action_add_rule()
+	local uci = require("luci.model.uci").cursor()
+	local http = require "luci.http"
+	local sys = require "luci.sys"
+
+	local name = http.formvalue("name") or "KidPhone"
+	local mac = (http.formvalue("mac") or ""):upper()
+	local mode = http.formvalue("mode") or "block"
+	local target_scope = http.formvalue("target_scope") or "all"
+	local app_category = http.formvalue("app_category") or "short_video"
+	local custom_domains = http.formvalue("custom_domains") or ""
+	local weekdays = http.formvalue("weekdays") or "1 2 3 4 5 6 7"
+	local start_time = http.formvalue("start_time") or "21:00"
+	local stop_time = http.formvalue("stop_time") or "07:00"
+	local up_kbit = http.formvalue("up_kbit") or ""
+	local down_kbit = http.formvalue("down_kbit") or ""
+
+	http.prepare_content("application/json")
+
+	if mac == "" then
+		http.write('{"status":"error","message":"MAC 地址不能为空！"}')
+		return
+	end
+
+	local section_id = uci:section("netspeedcontrol", "rule", nil, {
+		enabled = "1",
+		name = name,
+		mac = mac,
+		target_type = "mac",
+		mode = mode,
+		target_scope = target_scope,
+		app_category = app_category,
+		custom_domains = custom_domains,
+		weekdays = weekdays,
+		start_time = start_time,
+		stop_time = stop_time,
+		up_kbit = up_kbit,
+		down_kbit = down_kbit
+	})
+
+	if section_id then
+		uci:commit("netspeedcontrol")
+		sys.call("/etc/init.d/netspeedcontrol reload >/dev/null 2>&1 || /usr/bin/netspeedcontrol.sh apply >/dev/null 2>&1")
+		http.write('{"status":"ok"}')
+	else
+		http.write('{"status":"error","message":"写入 UCI 配置失败！"}')
+	end
 end
 
 function action_get_log()
