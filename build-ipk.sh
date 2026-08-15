@@ -25,6 +25,9 @@ cp "$SOURCE_DIR/luasrc/controller/netspeedcontrol.lua" \
 	"$BUILD_DIR/usr/lib/lua/luci/controller/netspeedcontrol.lua"
 cp "$SOURCE_DIR/luasrc/model/cbi/netspeedcontrol.lua" \
 	"$BUILD_DIR/usr/lib/lua/luci/model/cbi/netspeedcontrol.lua"
+cp -R "$SOURCE_DIR/luasrc/model/cbi/netspeedcontrol" \
+	"$BUILD_DIR/usr/lib/lua/luci/model/cbi/"
+
 
 cat > "$BUILD_DIR/CONTROL/control" <<'EOF'
 Package: luci-app-netspeedcontrol

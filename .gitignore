@@ -3,6 +3,5 @@
 .artest/
 
 dist/*.ipk
-!dist/luci-app-netspeedcontrol_0.1.0-31_all.ipk
-
+.agent/
 *.tmp
