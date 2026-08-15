@@ -43,7 +43,24 @@ jobs:
           echo "IPK Package Name: ${PKG_NAME}_${FULL_VERSION}_all.ipk"
 
       - name: Grant Execute Permission
-        run: chmod +x build-ipk.sh
+        run: chmod +x build-ipk.sh install.sh
+
+      - name: Install Validation Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 shellcheck
+
+      - name: Validate Lua & Shell Syntax
+        run: |
+          echo "=== 1. 正在校验所有 Lua 脚本语法 ==="
+          find luci-app-netspeedcontrol -type f -name "*.lua" -exec luac5.1 -p {} +
+          echo "✅ Lua 语法校验 100% 通过"
+
+          echo "=== 2. 正在校验 Shell 脚本语法 ==="
+          sh -n install.sh
+          sh -n build-ipk.sh
+          sh -n luci-app-netspeedcontrol/root/usr/bin/netspeedcontrol.sh
+          echo "✅ Shell 脚本语法校验 100% 通过"
 
       - name: Build IPK Package
         run: |
