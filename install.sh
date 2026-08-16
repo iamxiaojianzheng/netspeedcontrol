@@ -22,10 +22,13 @@ command -v curl >/dev/null 2>&1 || command -v wget >/dev/null 2>&1 || {
 mkdir -p "$TMP_DIR"
 cd "$TMP_DIR"
 
-PROXY="${GITHUB_PROXY:-}"
-if [ -n "$PROXY" ]; then
-    PROXY="${PROXY%/}/"
+raw_proxy="${GITHUB_PROXY:-$1}"
+PROXY=""
+if [ -n "$raw_proxy" ] && echo "$raw_proxy" | grep -qE '^https?://'; then
+    PROXY="${raw_proxy%/}/"
     echo "使用 GitHub 加速代理: $PROXY"
+else
+    echo "未设置加速代理。(提示: 可使用 export GITHUB_PROXY=... 或在 sh 前传递环境变量)"
 fi
 
 echo "正在从 GitHub Release 获取最新版本信息..."
