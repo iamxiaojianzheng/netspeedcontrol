@@ -33,9 +33,11 @@ RELEASE_API="https://api.github.com/repos/${REPO}/releases/latest"
 
 RAW_DOWNLOAD_URL=""
 if command -v curl >/dev/null 2>&1; then
-    RAW_DOWNLOAD_URL=$(curl -sL --connect-timeout 8 "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    RAW_DOWNLOAD_URL=$(curl -sL --connect-timeout 8 "${PROXY}${RELEASE_API}" 2>/dev/null | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    [ -z "$RAW_DOWNLOAD_URL" ] && RAW_DOWNLOAD_URL=$(curl -sL --connect-timeout 8 "$RELEASE_API" 2>/dev/null | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
 else
-    RAW_DOWNLOAD_URL=$(wget -qO- --timeout=8 "$RELEASE_API" | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    RAW_DOWNLOAD_URL=$(wget -qO- --timeout=8 "${PROXY}${RELEASE_API}" 2>/dev/null | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
+    [ -z "$RAW_DOWNLOAD_URL" ] && RAW_DOWNLOAD_URL=$(wget -qO- --timeout=8 "$RELEASE_API" 2>/dev/null | grep "browser_download_url.*\.ipk" | head -n 1 | cut -d '"' -f 4 || true)
 fi
 
 if [ -n "$RAW_DOWNLOAD_URL" ]; then
